@@ -85,17 +85,17 @@
         .theme-dark .nav-link.active { background-color: var(--ios-blue); color: white; }
         .theme-light .nav-link.active { background-color: var(--ios-blue); color: white; }
         
-        .form-input {
+        .form-input, .form-textarea {
             margin-top: 0.25rem; display: block; width: 100%;
             border-radius: 0.5rem; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
             padding: 0.75rem 1rem;
         }
-        .theme-dark .form-input {
+        .theme-dark .form-input, .theme-dark .form-textarea {
              background-color: rgba(120, 120, 128, 0.18);
              border: 1px solid var(--glass-border-color-dark);
              color: var(--text-primary-dark);
         }
-         .theme-light .form-input {
+         .theme-light .form-input, .theme-light .form-textarea {
              background-color: #fff;
              border: 1px solid #d1d5db;
              color: var(--text-primary-light);
@@ -196,6 +196,27 @@
     <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">設定</h1>
 
     <div class="glass-card p-6 sm:p-8 space-y-8">
+        <!-- 受験目標設定 -->
+        <section>
+            <h2 class="text-xl font-semibold tracking-tight pb-4 border-b border-[var(--glass-border-color-dark)] theme-light:border-[var(--glass-border-color-light)] mb-6">受験目標設定</h2>
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="target-school" class="form-label">志望校</label>
+                        <input type="text" id="target-school" class="form-input" placeholder="例: 東京大学 理科一類">
+                    </div>
+                    <div>
+                        <label for="exam-date" class="form-label">受験日</label>
+                        <input type="date" id="exam-date" class="form-input">
+                    </div>
+                </div>
+                <div>
+                    <label for="exam-subjects" class="form-label">受験科目</label>
+                    <textarea id="exam-subjects" rows="3" class="form-textarea" placeholder="例: 英語, 数学, 物理, 化学, 国語"></textarea>
+                </div>
+            </div>
+        </section>
+
         <!-- 表示設定 -->
         <section>
             <h2 class="text-xl font-semibold tracking-tight pb-4 border-b border-[var(--glass-border-color-dark)] theme-light:border-[var(--glass-border-color-light)] mb-6">表示設定</h2>
@@ -261,7 +282,6 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const geminiApiKeyInput = document.getElementById('geminiApiKey');
-        const aiToneContainer = document.getElementById('aiTone');
         const aiToneRadios = document.querySelectorAll('input[name="aiToneRadio"]');
         const customToneContainer = document.getElementById('customToneContainer');
         const customAiToneTextarea = document.getElementById('customAiTone');
@@ -270,11 +290,17 @@
         const exportButton = document.getElementById('exportDataButton');
         const importFileInput = document.getElementById('importDataFile');
         const resetButton = document.getElementById('resetDataButton');
+        
+        // Exam Goal Elements
+        const targetSchoolInput = document.getElementById('target-school');
+        const examDateInput = document.getElementById('exam-date');
+        const examSubjectsInput = document.getElementById('exam-subjects');
 
         const API_KEY_KEY = '学習記録アプリ_GeminiAPIキー';
         const AI_TONE_KEY = '学習記録アプリ_AIトーン';
         const CUSTOM_AI_TONE_KEY = '学習記録アプリ_カスタムAIトーン';
         const THEME_KEY = '学習記録アプリ_テーマ';
+        const EXAM_GOAL_KEY = '学習記録アプリ_受験目標';
         
         function applyTheme(theme) {
             document.documentElement.className = `theme-${theme}`;
@@ -295,6 +321,11 @@
             const savedTheme = localStorage.getItem(THEME_KEY) || 'dark';
             const themeRadio = themeSelector.querySelector(`input[value="${savedTheme}"]`);
             if (themeRadio) themeRadio.checked = true;
+            
+            const examGoal = JSON.parse(localStorage.getItem(EXAM_GOAL_KEY)) || {};
+            targetSchoolInput.value = examGoal.school || '';
+            examDateInput.value = examGoal.date || '';
+            examSubjectsInput.value = examGoal.subjects || '';
         }
 
         function saveSettings() {
@@ -315,6 +346,13 @@
                 localStorage.setItem(THEME_KEY, selectedTheme);
                 applyTheme(selectedTheme);
             }
+            
+            const examGoal = {
+                school: targetSchoolInput.value.trim(),
+                date: examDateInput.value,
+                subjects: examSubjectsInput.value.trim()
+            };
+            localStorage.setItem(EXAM_GOAL_KEY, JSON.stringify(examGoal));
             
             alert('設定を保存しました。');
         }
