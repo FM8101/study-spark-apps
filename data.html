@@ -112,17 +112,17 @@
         .theme-dark .nav-link.active { background-color: var(--ios-blue); color: white; }
         .theme-light .nav-link.active { background-color: var(--ios-blue); color: white; }
         
-        .form-input, .form-select {
+        .form-input, .form-select, .form-textarea {
             margin-top: 0.25rem; display: block; width: 100%;
             border-radius: 0.5rem; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
             padding: 0.75rem 1rem;
         }
-        .theme-dark .form-input, .theme-dark .form-select {
+        .theme-dark .form-input, .theme-dark .form-select, .theme-dark .form-textarea {
              background-color: rgba(120, 120, 128, 0.18);
              border: 1px solid var(--glass-border-color-dark);
              color: var(--text-primary-dark);
         }
-         .theme-light .form-input, .theme-light .form-select {
+         .theme-light .form-input, .theme-light .form-select, .theme-light .form-textarea {
              background-color: #fff;
              border: 1px solid #d1d5db;
              color: var(--text-primary-light);
@@ -155,7 +155,7 @@
             <input type="hidden" id="mock-exam-id">
             <div><label for="mock-exam-name" class="block text-sm font-medium mb-1">模試名</label><input type="text" id="mock-exam-name" class="form-input" required></div>
             <div><label for="mock-exam-date" class="block text-sm font-medium mb-1">受験日</label><input type="date" id="mock-exam-date" class="form-input" required></div>
-            <div><label for="mock-exam-scores" class="block text-sm font-medium mb-1">科目と点数・偏差値</label><textarea id="mock-exam-scores" class="form-input" rows="4" placeholder="例:&#10;英語, 160/200, 65.5&#10;数学, 140/200, 62.0"></textarea></div>
+            <div><label for="mock-exam-scores" class="block text-sm font-medium mb-1">科目と点数・偏差値</label><textarea id="mock-exam-scores" class="form-textarea" rows="4" placeholder="例:&#10;英語, 160/200, 65.5&#10;数学, 140/200, 62.0"></textarea></div>
             <div><label for="mock-exam-judgment" class="block text-sm font-medium mb-1">判定</label><input type="text" id="mock-exam-judgment" class="form-input" placeholder="例: A判定, B判定"></div>
             <div class="flex justify-end gap-4 pt-4">
                 <button type="button" data-action="close-popup" class="px-5 py-2 rounded-lg bg-black/20 hover:bg-black/30 font-semibold">キャンセル</button>
@@ -264,6 +264,8 @@
         const REVIEW_ITEMS_KEY = '学習記録アプリ_復習項目';
         const MOCK_EXAMS_KEY = '学習記録アプリ_模試結果';
         const PAST_PAPERS_KEY = '学習記録アプリ_過去問記録';
+        const NEW_MOCK_EXAM_KEY = '学習記録アプリ_新規模試結果';
+        const EXAM_MODE_KEY = '学習記録アプリ_受験対策モード';
         let records = [];
         let chartInstances = {};
         let activeTab = 'daily';
@@ -617,6 +619,12 @@
         function init() {
             records = utils.loadData(RECORDS_KEY);
             
+            const isExamMode = (localStorage.getItem(EXAM_MODE_KEY) === 'true');
+            const examTab = document.querySelector('[data-tab-name="exam"]');
+            if (examTab && !isExamMode) {
+                examTab.classList.add('hidden');
+            }
+
             document.body.addEventListener('click', (e) => {
                 const target = e.target.closest('[data-action]');
                 if (!target) return;
@@ -640,6 +648,7 @@
                 const exams = utils.loadData(MOCK_EXAMS_KEY);
                 exams.push(data);
                 utils.saveData(MOCK_EXAMS_KEY, exams);
+                localStorage.setItem(NEW_MOCK_EXAM_KEY, data.id); // Set flag for feedback
                 renderExamResults();
                 document.getElementById('addMockExamPopup').classList.remove('visible');
             });
