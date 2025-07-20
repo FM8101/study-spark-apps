@@ -473,6 +473,9 @@
         const CONSTANTS = {
             INITIAL_SURVEY_COMPLETED_KEY: '学習記録アプリ_初回アンケート完了',
             USER_PROFILE_KEY: '学習記録アプリ_ユーザープロファイル',
+            EXAM_GOAL_KEY: '学習記録アプリ_受験目標',
+            MOCK_EXAMS_KEY: '学習記録アプリ_模試結果',
+            PAST_PAPERS_KEY: '学習記録アプリ_過去問記録',
             LAYOUT_ORDER_KEY: '学習記録アプリ_レイアウト順序',
             RECORDS_KEY: '学習記録アプリ_日々の記録',
             REVIEW_ITEMS_KEY: '学習記録アプリ_復習項目',
@@ -972,22 +975,30 @@
                     if(DOMElements.aiLoadingMessage) DOMElements.aiLoadingMessage.style.display = 'block';
                     DOMElements.aiAdviceContainer.innerHTML = '';
 
+                    // Load all necessary data
                     const records = utils.loadData(CONSTANTS.RECORDS_KEY);
                     const reviewItems = utils.loadData(CONSTANTS.REVIEW_ITEMS_KEY);
                     const surveyData = utils.loadData(CONSTANTS.AI_SURVEY_KEY_PREFIX + currentWeekNumber, null);
                     const userProfile = utils.loadData(CONSTANTS.USER_PROFILE_KEY, null);
+                    const examGoal = utils.loadData(CONSTANTS.EXAM_GOAL_KEY, null);
+                    const mockExams = utils.loadData(CONSTANTS.MOCK_EXAMS_KEY);
+                    const pastPapers = utils.loadData(CONSTANTS.PAST_PAPERS_KEY);
 
+                    // Basis for plan generation
                     const basis = {
                         records: `${records.length}件の学習記録`,
                         reviewItems: `${reviewItems.filter(item => !item.isCompleted).length}件の復習項目`,
                         survey: surveyData ? '今週のアンケート回答あり' : '今週のアンケート回答なし',
-                        profile: userProfile ? '基本プロファイルあり' : '基本プロファイルなし'
+                        profile: userProfile ? '基本プロファイルあり' : '基本プロファイルなし',
+                        examGoal: examGoal ? '受験目標設定あり' : '受験目標設定なし',
+                        mockExams: `${mockExams.length}件の模試結果`,
+                        pastPapers: `${pastPapers.length}件の過去問記録`,
                     };
                     const basisKey = CONSTANTS.AI_PLAN_BASIS_KEY_PREFIX + currentWeekNumber;
                     utils.saveData(basisKey, basis);
                     
                     const model = 'gemini-1.5-flash';
-                    let prompt = `あなたは優秀な学習プランナーです。以下のユーザーの状況を考慮し、今週1週間の具体的な学習スケジュールと、学習を継続するための実践的なアドバイスを生成してください。`;
+                    let prompt = `あなたは優秀な受験戦略家です。以下のユーザーの状況を分析し、志望校合格という目標から逆算して、今週1週間の具体的かつ戦略的な学習スケジュールと、学習を継続するための実践的なアドバイスを生成してください。`;
 
                     if (userProfile) {
                         prompt += `
@@ -1000,16 +1011,44 @@
 - 主な学習デバイス: ${userProfile.device}`;
                     }
 
+                    if (examGoal && examGoal.school) {
+                        let daysRemainingText = '不明';
+                        if (examGoal.date) {
+                            const diffTime = new Date(examGoal.date) - new Date();
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            daysRemainingText = `${diffDays}日`;
+                        }
+                        prompt += `
+
+【ユーザーの目標】
+- 志望校: ${examGoal.school}
+- 受験日: ${examGoal.date || '未設定'} (残り ${daysRemainingText})
+- 受験科目: ${examGoal.subjects || '未設定'}`;
+                    }
+                    
                     prompt += `
 
 【ユーザーの現在の状況】
-- 学習記録: 直近の記録が${records.length}件あります。
-- 復習項目: ${reviewItems.filter(item => !item.isCompleted).length}件の未完了の復習タスクがあります。`;
+- 全学習記録: ${records.length}件
+- 未完了の復習タスク: ${reviewItems.filter(item => !item.isCompleted).length}件`;
+                    
+                    if (mockExams.length > 0) {
+                        const latestMock = mockExams.sort((a,b) => new Date(b.date) - new Date(a.date))[0];
+                        prompt += `
+- 最新の模試結果 (${latestMock.name}, ${latestMock.date}):
+${latestMock.scores.split('\n').map(s => `  - ${s}`).join('\n')}
+  - 判定: ${latestMock.judgment}`;
+                    }
+                    
+                    if (pastPapers.length > 0) {
+                        prompt += `
+- 過去問演習記録: ${pastPapers.length}件`;
+                    }
 
                     if (surveyData) {
                         prompt += `
 
-【今週の学習アンケート回答】
+【今週の学習方針】
 - 特に集中したい教科: ${surveyData.focusSubjects.join(', ') || '特に指定なし'}
 - 特に集中したい教材: ${surveyData.focusTextbooks.join(', ') || '特に指定なし'}
 - 今週の学習ペース: ${surveyData.pace || '通常通り'}
@@ -1018,6 +1057,12 @@
 
                     prompt += `
 
+【指示】
+1. 上記の全情報を総合的に分析し、志望校と現状のギャップを特定してください。
+2. そのギャップを埋めるために、今週最も優先すべき学習課題を3つ挙げてください。
+3. それらの課題に基づき、具体的な教材名や参考書のページ範囲まで含んだ、実行可能な1週間の学習スケジュールを生成してください。
+4. 学習を継続するための、モチベーションを高める実践的なアドバイスも提供してください。
+
 【出力形式のルール】
 必ず以下のキーを含むJSONオブジェクトのみを返してください。説明文やマークダウンのコードブロック指定(\`\`\`json)は絶対に含めないでください。
 {
@@ -1025,8 +1070,8 @@
     {
       "dayOfWeek": "月曜日",
       "timeline": [
-        {"task": "数学: 教科書P.30-35の復習"},
-        {"task": "英語: 長文問題集を2題解く"}
+        {"task": "数学: 青チャート 例題10-15 (p.25-30)"},
+        {"task": "英語: 単語帳 ターゲット1900 (100-200)"}
       ]
     }
   ],
