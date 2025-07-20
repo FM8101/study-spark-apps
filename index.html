@@ -168,6 +168,21 @@
 <div class="aurora-background"></div>
 
 <!-- Popups -->
+<div id="aiConsentPopup" class="popup-overlay">
+    <div class="popup-content glass-card">
+        <h2 class="text-xl font-bold mb-4">AI機能の利用について</h2>
+        <div class="text-sm space-y-3 mb-6">
+            <p>AIによる分析と計画作成の機能を利用するために、あなたの学習データを匿名化した上で、外部のAIサーバー（Google）に送信する必要があります。</p>
+            <p>送信されるデータには、志望校名などの個人を特定できる情報は含まれません。詳しくは<a href="./others.html" class="text-[var(--ios-blue)] underline">プライバシーポリシー</a>をご確認ください。</p>
+            <p>このデータ送信に同意しますか？</p>
+        </div>
+        <div class="flex justify-end gap-4">
+            <button data-action="ai-consent-decline" class="px-5 py-2 rounded-lg bg-black/20 hover:bg-black/30 font-semibold">同意しない</button>
+            <button data-action="ai-consent-agree" class="px-5 py-2 rounded-lg bg-[var(--ios-blue)] text-white hover:bg-blue-600 font-semibold">同意する</button>
+        </div>
+    </div>
+</div>
+
 <div id="initialSurveyPopup" class="popup-overlay">
     <div class="popup-content glass-card">
         <h2 class="text-2xl font-bold mb-2">ようこそ StudySparkへ！</h2>
@@ -492,6 +507,7 @@
             passProbabilityEl: document.getElementById('pass-probability'),
             priorityTasksEl: document.getElementById('priority-tasks'),
             weeklyThemeEl: document.getElementById('weekly-theme'),
+            aiConsentPopup: document.getElementById('aiConsentPopup'),
         };
 
         const CONSTANTS = {
@@ -501,6 +517,7 @@
             MOCK_EXAMS_KEY: '学習記録アプリ_模試結果',
             PAST_PAPERS_KEY: '学習記録アプリ_過去問記録',
             NEW_MOCK_EXAM_KEY: '学習記録アプリ_新規模試結果',
+            AI_DATA_CONSENT_KEY: '学習記録アプリ_AIデータ送信同意',
             LAYOUT_ORDER_KEY: '学習記録アプリ_レイアウト順序',
             RECORDS_KEY: '学習記録アプリ_日々の記録',
             REVIEW_ITEMS_KEY: '学習記録アプリ_復習項目',
@@ -991,6 +1008,13 @@
             },
             runAiFeature: async ({ forceRefresh = false } = {}) => {
                 if (state.isAiRunning || !DOMElements.aiAdviceContainer || !DOMElements.refreshAiPlanBtn) return;
+                
+                const consent = await actions.checkAiConsent();
+                if (!consent) {
+                    DOMElements.aiAdviceContainer.innerHTML = `<p class="text-[var(--ios-orange)]">AI機能を利用するには、データ送信への同意が必要です。右上の設定ボタンから再度お試しください。</p>`;
+                    return;
+                }
+
                 const apiKey = localStorage.getItem(CONSTANTS.API_KEY_KEY);
                 if (!apiKey) {
                     DOMElements.aiAdviceContainer.innerHTML = `<p class="text-[var(--ios-red)]">AI機能を利用するにはAPIキーを設定してください。</p>`;
@@ -1059,7 +1083,7 @@
                         prompt += `
 
 【ユーザーの目標】
-- 志望校: ${examGoal.school}
+- 志望校: ${examGoal.school} (匿名化: 志望校A)
 - 受験日: ${examGoal.date || '未設定'} (残り ${daysRemainingText})
 - 受験科目: ${examGoal.subjects || '未設定'}`;
                     }
@@ -1073,7 +1097,7 @@
                     if (mockExams.length > 0) {
                         const latestMock = mockExams.sort((a,b) => new Date(b.date) - new Date(a.date))[0];
                         prompt += `
-- 最新の模試結果 (${latestMock.name}, ${latestMock.date}):
+- 最新の模試結果 (${latestMock.name} (${latestMock.date}) を「模試A」とします):
 ${latestMock.scores.split('\n').map(s => `  - ${s}`).join('\n')}
   - 判定: ${latestMock.judgment}`;
                     }
@@ -1195,6 +1219,12 @@ ${latestMock.scores.split('\n').map(s => `  - ${s}`).join('\n')}
                 const newMockExamId = localStorage.getItem(CONSTANTS.NEW_MOCK_EXAM_KEY);
                 if (!newMockExamId) return;
 
+                const consent = await actions.checkAiConsent();
+                if (!consent) {
+                    localStorage.removeItem(CONSTANTS.NEW_MOCK_EXAM_KEY);
+                    return;
+                }
+
                 const apiKey = localStorage.getItem(CONSTANTS.API_KEY_KEY);
                 if (!apiKey) return;
 
@@ -1210,10 +1240,10 @@ ${latestMock.scores.split('\n').map(s => `  - ${s}`).join('\n')}
                 let prompt = `あなたは優秀な受験戦略家です。生徒が新しい模試の結果を記録しました。この結果を分析し、具体的で実行可能な改善アドバイスを生成してください。
 
 【生徒の目標】
-- 志望校: ${examGoal?.school || '未設定'}
+- 志望校: ${examGoal?.school ? '志望校A' : '未設定'}
 
 【新しい模試結果】
-- 模試名: ${newExam.name}
+- 模試名: 模試A
 - 受験日: ${newExam.date}
 - 結果:
 ${newExam.scores.split('\n').map(s => `  - ${s}`).join('\n')}
@@ -1245,6 +1275,33 @@ ${newExam.scores.split('\n').map(s => `  - ${s}`).join('\n')}
                 } finally {
                     localStorage.removeItem(CONSTANTS.NEW_MOCK_EXAM_KEY);
                 }
+            },
+            checkAiConsent: () => {
+                return new Promise(resolve => {
+                    if (utils.loadData(CONSTANTS.AI_DATA_CONSENT_KEY, false)) {
+                        resolve(true);
+                        return;
+                    }
+                    
+                    DOMElements.aiConsentPopup.classList.add('visible');
+                    
+                    const handleConsent = (e) => {
+                        const action = e.target.closest('[data-action]')?.dataset.action;
+                        if (action === 'ai-consent-agree') {
+                            utils.saveData(CONSTANTS.AI_DATA_CONSENT_KEY, true);
+                            DOMElements.aiConsentPopup.classList.remove('visible');
+                            resolve(true);
+                        } else if (action === 'ai-consent-decline') {
+                            DOMElements.aiConsentPopup.classList.remove('visible');
+                            resolve(false);
+                        } else {
+                            return;
+                        }
+                        DOMElements.aiConsentPopup.removeEventListener('click', handleConsent);
+                    };
+                    
+                    DOMElements.aiConsentPopup.addEventListener('click', handleConsent);
+                });
             }
         };
 
