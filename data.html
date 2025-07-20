@@ -111,6 +111,22 @@
         }
         .theme-dark .nav-link.active { background-color: var(--ios-blue); color: white; }
         .theme-light .nav-link.active { background-color: var(--ios-blue); color: white; }
+        
+        .form-input, .form-select {
+            margin-top: 0.25rem; display: block; width: 100%;
+            border-radius: 0.5rem; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+            padding: 0.75rem 1rem;
+        }
+        .theme-dark .form-input, .theme-dark .form-select {
+             background-color: rgba(120, 120, 128, 0.18);
+             border: 1px solid var(--glass-border-color-dark);
+             color: var(--text-primary-dark);
+        }
+         .theme-light .form-input, .theme-light .form-select {
+             background-color: #fff;
+             border: 1px solid #d1d5db;
+             color: var(--text-primary-light);
+        }
     </style>
      <script>
         const savedTheme = localStorage.getItem('学習記録アプリ_テーマ') || 'dark';
@@ -120,7 +136,7 @@
 <body class="opacity-0 transition-opacity duration-300">
 <div class="aurora-background"></div>
 
-<!-- 確認ポップアップ -->
+<!-- Popups -->
 <div id="confirmPopup" class="popup-overlay">
     <div class="popup-content glass-card">
         <h2 id="confirm-title" class="text-xl font-bold mb-4">確認</h2>
@@ -131,6 +147,43 @@
         </div>
     </div>
 </div>
+
+<div id="addMockExamPopup" class="popup-overlay">
+    <div class="popup-content glass-card">
+        <h2 class="text-xl font-bold mb-4">模試結果を追加</h2>
+        <form id="mock-exam-form" class="space-y-4">
+            <input type="hidden" id="mock-exam-id">
+            <div><label for="mock-exam-name" class="block text-sm font-medium mb-1">模試名</label><input type="text" id="mock-exam-name" class="form-input" required></div>
+            <div><label for="mock-exam-date" class="block text-sm font-medium mb-1">受験日</label><input type="date" id="mock-exam-date" class="form-input" required></div>
+            <div><label for="mock-exam-scores" class="block text-sm font-medium mb-1">科目と点数・偏差値</label><textarea id="mock-exam-scores" class="form-input" rows="4" placeholder="例:&#10;英語, 160/200, 65.5&#10;数学, 140/200, 62.0"></textarea></div>
+            <div><label for="mock-exam-judgment" class="block text-sm font-medium mb-1">判定</label><input type="text" id="mock-exam-judgment" class="form-input" placeholder="例: A判定, B判定"></div>
+            <div class="flex justify-end gap-4 pt-4">
+                <button type="button" data-action="close-popup" class="px-5 py-2 rounded-lg bg-black/20 hover:bg-black/30 font-semibold">キャンセル</button>
+                <button type="submit" class="px-5 py-2 rounded-lg bg-[var(--ios-blue)] text-white hover:bg-blue-600 font-semibold">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="addPastPaperPopup" class="popup-overlay">
+    <div class="popup-content glass-card">
+        <h2 class="text-xl font-bold mb-4">過去問演習を追加</h2>
+        <form id="past-paper-form" class="space-y-4">
+            <input type="hidden" id="past-paper-id">
+            <div><label for="past-paper-university" class="block text-sm font-medium mb-1">大学名</label><input type="text" id="past-paper-university" class="form-input" required></div>
+            <div class="grid grid-cols-2 gap-4">
+                <div><label for="past-paper-year" class="block text-sm font-medium mb-1">年度</label><input type="number" id="past-paper-year" class="form-input" placeholder="例: 2023" required></div>
+                <div><label for="past-paper-subject" class="block text-sm font-medium mb-1">科目</label><input type="text" id="past-paper-subject" class="form-input" required></div>
+            </div>
+            <div><label for="past-paper-score" class="block text-sm font-medium mb-1">点数 / 得点率</label><input type="text" id="past-paper-score" class="form-input" placeholder="例: 85/120, 75%"></div>
+            <div class="flex justify-end gap-4 pt-4">
+                <button type="button" data-action="close-popup" class="px-5 py-2 rounded-lg bg-black/20 hover:bg-black/30 font-semibold">キャンセル</button>
+                <button type="submit" class="px-5 py-2 rounded-lg bg-[var(--ios-blue)] text-white hover:bg-blue-600 font-semibold">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 
 <div id="main-content" class="relative flex size-full min-h-screen flex-col bg-transparent group/design-root overflow-x-hidden">
 <header class="sticky top-0 z-50 px-4 sm:px-6 py-3 shadow-sm border-b glass-card !rounded-none">
@@ -166,6 +219,7 @@
                     <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)] hover:text-white/80 theme-light:hover:text-gray-700 hover:border-gray-300/50" data-tab-name="weekly">週別</button>
                     <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)] hover:text-white/80 theme-light:hover:text-gray-700 hover:border-gray-300/50" data-tab-name="monthly">月別</button>
                     <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)] hover:text-white/80 theme-light:hover:text-gray-700 hover:border-gray-300/50" data-tab-name="overall">総合</button>
+                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)] hover:text-white/80 theme-light:hover:text-gray-700 hover:border-gray-300/50" data-tab-name="exam">模試・過去問</button>
                     <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)] hover:text-white/80 theme-light:hover:text-gray-700 hover:border-gray-300/50" data-tab-name="history">学習履歴</button>
                 </nav>
             </div>
@@ -175,6 +229,24 @@
                 <div id="weeklyContent" class="tab-content hidden"><div class="grid grid-cols-1 lg:grid-cols-5 gap-6"><div class="lg:col-span-3"><div class="chart-container"><canvas id="weeklyBarChart"></canvas></div></div><div class="lg:col-span-2"><div class="chart-container"><canvas id="weeklyPieChart"></canvas></div></div></div></div>
                 <div id="monthlyContent" class="tab-content hidden"><div class="grid grid-cols-1 gap-6"><div class=""><div class="chart-container"><canvas id="monthlyTotalBarChart"></canvas></div></div><div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-6"><div class="lg:col-span-3"><div class="chart-container"><canvas id="monthlyBarChart"></canvas></div></div><div class="lg:col-span-2"><div class="chart-container"><canvas id="monthlyPieChart"></canvas></div></div></div></div></div>
                 <div id="overallContent" class="tab-content hidden"><div class="grid grid-cols-1 lg:grid-cols-5 gap-6"><div class="lg:col-span-3"><div class="chart-container"><canvas id="overallBarChart"></canvas></div></div><div class="lg:col-span-2"><div class="chart-container"><canvas id="overallPieChart"></canvas></div></div></div></div>
+                <div id="examContent" class="tab-content hidden">
+                    <div class="mb-8">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold">模試結果</h3>
+                            <button data-action="open-mock-exam-form" class="px-4 py-2 text-sm rounded-lg bg-[var(--ios-blue)] text-white hover:bg-blue-600 font-semibold">結果を追加</button>
+                        </div>
+                        <div id="mock-exam-list" class="space-y-4"></div>
+                        <p id="mock-exam-empty-message" class="hidden text-center text-gray-400 py-8">模試の結果がありません。</p>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold">過去問演習記録</h3>
+                            <button data-action="open-past-paper-form" class="px-4 py-2 text-sm rounded-lg bg-[var(--ios-blue)] text-white hover:bg-blue-600 font-semibold">記録を追加</button>
+                        </div>
+                        <div id="past-paper-list" class="space-y-4"></div>
+                        <p id="past-paper-empty-message" class="hidden text-center text-gray-400 py-8">過去問の記録がありません。</p>
+                    </div>
+                </div>
                 <div id="historyContent" class="tab-content hidden">
                     <div id="history-list" class="space-y-4"></div>
                     <p id="history-empty-message" class="hidden text-center text-gray-400 py-8">学習記録がありません。</p>
@@ -190,6 +262,8 @@
     document.addEventListener('DOMContentLoaded', () => {
         const RECORDS_KEY = '学習記録アプリ_日々の記録';
         const REVIEW_ITEMS_KEY = '学習記録アプリ_復習項目';
+        const MOCK_EXAMS_KEY = '学習記録アプリ_模試結果';
+        const PAST_PAPERS_KEY = '学習記録アプリ_過去問記録';
         let records = [];
         let chartInstances = {};
         let activeTab = 'daily';
@@ -467,6 +541,49 @@
                 historyList.appendChild(card);
             });
         }
+
+        function renderExamResults() {
+            const mockExamList = document.getElementById('mock-exam-list');
+            const mockExamEmptyMessage = document.getElementById('mock-exam-empty-message');
+            const pastPaperList = document.getElementById('past-paper-list');
+            const pastPaperEmptyMessage = document.getElementById('past-paper-empty-message');
+
+            const mockExams = utils.loadData(MOCK_EXAMS_KEY).sort((a, b) => b.date.localeCompare(a.date));
+            mockExamList.innerHTML = '';
+            mockExamEmptyMessage.classList.toggle('hidden', mockExams.length > 0);
+            mockExams.forEach(exam => {
+                const scoresHtml = exam.scores.split('\n').map(line => `<p class="text-sm text-gray-300">${line}</p>`).join('');
+                mockExamList.innerHTML += `
+                    <div class="p-4 rounded-lg bg-white/5">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs text-gray-400">${exam.date}</p>
+                                <p class="font-semibold">${exam.name}</p>
+                                <div class="mt-2">${scoresHtml}</div>
+                                <p class="text-sm font-bold mt-2">判定: ${exam.judgment}</p>
+                            </div>
+                            <button data-action="delete-mock-exam" data-id="${exam.id}" class="w-8 h-8 flex-shrink-0 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-500/10"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>`;
+            });
+
+            const pastPapers = utils.loadData(PAST_PAPERS_KEY).sort((a, b) => b.year - a.year);
+            pastPaperList.innerHTML = '';
+            pastPaperEmptyMessage.classList.toggle('hidden', pastPapers.length > 0);
+            pastPapers.forEach(paper => {
+                 pastPaperList.innerHTML += `
+                    <div class="p-4 rounded-lg bg-white/5">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs text-gray-400">${paper.year}年度</p>
+                                <p class="font-semibold">${paper.university} - ${paper.subject}</p>
+                                <p class="text-sm font-bold mt-2">点数: ${paper.score}</p>
+                            </div>
+                            <button data-action="delete-past-paper" data-id="${paper.id}" class="w-8 h-8 flex-shrink-0 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-500/10"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>`;
+            });
+        }
         
         function showTab(tabName) {
             activeTab = tabName;
@@ -477,11 +594,9 @@
                 btn.classList.toggle('active', btn.dataset.tabName === tabName);
             });
 
-            if (tabName === 'history') {
-                renderHistoryList();
-            } else {
-                renderCharts(tabName);
-            }
+            if (tabName === 'history') renderHistoryList();
+            else if (tabName === 'exam') renderExamResults();
+            else renderCharts(tabName);
         }
 
         async function deleteRecord(recordId) {
@@ -507,9 +622,42 @@
                 if (!target) return;
 
                 const action = target.dataset.action;
-                if (action === 'delete-record') {
-                    deleteRecord(target.dataset.recordId);
-                }
+                if (action === 'delete-record') deleteRecord(target.dataset.recordId);
+                if (action === 'open-mock-exam-form') document.getElementById('addMockExamPopup').classList.add('visible');
+                if (action === 'open-past-paper-form') document.getElementById('addPastPaperPopup').classList.add('visible');
+                if (action === 'close-popup') target.closest('.popup-overlay').classList.remove('visible');
+            });
+            
+            document.getElementById('mock-exam-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const data = {
+                    id: Date.now().toString(),
+                    name: document.getElementById('mock-exam-name').value,
+                    date: document.getElementById('mock-exam-date').value,
+                    scores: document.getElementById('mock-exam-scores').value,
+                    judgment: document.getElementById('mock-exam-judgment').value,
+                };
+                const exams = utils.loadData(MOCK_EXAMS_KEY);
+                exams.push(data);
+                utils.saveData(MOCK_EXAMS_KEY, exams);
+                renderExamResults();
+                document.getElementById('addMockExamPopup').classList.remove('visible');
+            });
+
+            document.getElementById('past-paper-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const data = {
+                    id: Date.now().toString(),
+                    university: document.getElementById('past-paper-university').value,
+                    year: document.getElementById('past-paper-year').value,
+                    subject: document.getElementById('past-paper-subject').value,
+                    score: document.getElementById('past-paper-score').value,
+                };
+                const papers = utils.loadData(PAST_PAPERS_KEY);
+                papers.push(data);
+                utils.saveData(PAST_PAPERS_KEY, papers);
+                renderExamResults();
+                document.getElementById('addPastPaperPopup').classList.remove('visible');
             });
 
             document.querySelectorAll('.tab-button').forEach(button => {
