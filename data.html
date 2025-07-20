@@ -32,6 +32,7 @@
             font-family: 'SF Pro Display', 'Inter', sans-serif;
             transition: background-color 0.3s, color 0.3s;
             opacity: 0;
+            padding-bottom: 80px; /* Add padding for bottom nav */
         }
         body.loaded {
             opacity: 1;
@@ -112,6 +113,15 @@
         .theme-dark .nav-link.active { background-color: var(--ios-blue); color: white; }
         .theme-light .nav-link.active { background-color: var(--ios-blue); color: white; }
         
+        .nav-link-mobile {
+            transition: color 0.2s;
+        }
+        .theme-dark .nav-link-mobile { color: var(--text-secondary-dark); }
+        .theme-light .nav-link-mobile { color: var(--text-secondary-light); }
+        .nav-link-mobile.active {
+            color: var(--ios-blue);
+        }
+
         .form-input, .form-select, .form-textarea {
             margin-top: 0.25rem; display: block; width: 100%;
             border-radius: 0.5rem; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
@@ -255,6 +265,26 @@
         </div>
     </div>
 </main>
+<nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 p-2 border-t glass-card !rounded-t-2xl !rounded-b-none">
+    <div class="max-w-md mx-auto flex justify-around">
+        <a href="./index.html" class="flex flex-col items-center justify-center text-center w-16 h-16 rounded-lg transition-colors nav-link-mobile">
+            <i class="fas fa-home text-xl"></i>
+            <span class="text-xs mt-1">ホーム</span>
+        </a>
+        <a href="./record.html" class="flex flex-col items-center justify-center text-center w-16 h-16 rounded-lg transition-colors nav-link-mobile">
+            <i class="fas fa-pen-to-square text-xl"></i>
+            <span class="text-xs mt-1">記録</span>
+        </a>
+        <a href="./data.html" class="flex flex-col items-center justify-center text-center w-16 h-16 rounded-lg transition-colors nav-link-mobile active">
+            <i class="fas fa-chart-bar text-xl"></i>
+            <span class="text-xs mt-1">データ</span>
+        </a>
+        <a href="./others.html" class="flex flex-col items-center justify-center text-center w-16 h-16 rounded-lg transition-colors nav-link-mobile">
+            <i class="fas fa-ellipsis text-xl"></i>
+            <span class="text-xs mt-1">その他</span>
+        </a>
+    </div>
+</nav>
 </div>
 
 <script>
