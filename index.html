@@ -333,6 +333,27 @@
         </div>
         
         <div id="sortable-sections" class="flex flex-col gap-8 sm:gap-10">
+            <section data-section-id="strategy-summary">
+                <div class="flex justify-between items-center px-1 pb-4 sm:pb-5">
+                    <h2 class="text-xl sm:text-2xl font-semibold leading-tight tracking-tight">合格戦略サマリー</h2>
+                    <div class="drag-handle hidden cursor-move text-gray-500"><i class="fas fa-grip-vertical"></i></div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
+                    <div class="flex flex-col gap-3 p-6 sm:p-7 glass-card">
+                        <p class="text-sm font-medium leading-normal text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)]">現在の合格可能性</p>
+                        <p id="pass-probability" class="tracking-tight text-3xl sm:text-4xl font-bold leading-tight">分析中...</p>
+                    </div>
+                    <div class="flex flex-col gap-3 p-6 sm:p-7 glass-card">
+                        <p class="text-sm font-medium leading-normal text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)]">今週の最優先課題</p>
+                        <ul id="priority-tasks" class="mt-2 space-y-2 text-sm list-disc pl-5"><li>分析中...</li></ul>
+                    </div>
+                    <div class="flex flex-col gap-3 p-6 sm:p-7 glass-card">
+                        <p class="text-sm font-medium leading-normal text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)]">今週のおすすめ学習テーマ</p>
+                        <p id="weekly-theme" class="tracking-tight text-lg font-semibold leading-tight mt-2">分析中...</p>
+                    </div>
+                </div>
+            </section>
+
             <section data-section-id="overview">
                 <div class="flex justify-between items-center px-1 pb-4 sm:pb-5">
                     <h2 class="text-xl sm:text-2xl font-semibold leading-tight tracking-tight">学習状況の概要</h2>
@@ -468,6 +489,9 @@
             notificationList: document.getElementById('notification-list'),
             notificationBadge: document.getElementById('notification-badge'),
             noNotificationMessage: document.getElementById('no-notification-message'),
+            passProbabilityEl: document.getElementById('pass-probability'),
+            priorityTasksEl: document.getElementById('priority-tasks'),
+            weeklyThemeEl: document.getElementById('weekly-theme'),
         };
 
         const CONSTANTS = {
@@ -476,6 +500,7 @@
             EXAM_GOAL_KEY: '学習記録アプリ_受験目標',
             MOCK_EXAMS_KEY: '学習記録アプリ_模試結果',
             PAST_PAPERS_KEY: '学習記録アプリ_過去問記録',
+            NEW_MOCK_EXAM_KEY: '学習記録アプリ_新規模試結果',
             LAYOUT_ORDER_KEY: '学習記録アプリ_レイアウト順序',
             RECORDS_KEY: '学習記録アプリ_日々の記録',
             REVIEW_ITEMS_KEY: '学習記録アプリ_復習項目',
@@ -751,6 +776,19 @@
                 const hasNotifications = DOMElements.notificationList.children.length > 0;
                 DOMElements.notificationBadge.classList.toggle('hidden', !hasNotifications);
                 DOMElements.noNotificationMessage.classList.toggle('hidden', hasNotifications);
+            },
+            strategySummary: (summary) => {
+                if (!summary) {
+                    DOMElements.passProbabilityEl.textContent = 'データ不足';
+                    DOMElements.priorityTasksEl.innerHTML = '<li>データ不足</li>';
+                    DOMElements.weeklyThemeEl.textContent = 'データ不足';
+                    return;
+                }
+                DOMElements.passProbabilityEl.textContent = summary.pass_probability || '分析中...';
+                DOMElements.priorityTasksEl.innerHTML = summary.priority_tasks && summary.priority_tasks.length > 0
+                    ? summary.priority_tasks.map(task => `<li>${task}</li>`).join('')
+                    : '<li>特になし</li>';
+                DOMElements.weeklyThemeEl.textContent = summary.weekly_theme || '分析中...';
             },
             all: () => {
                 render.dashboard();
@@ -1062,10 +1100,16 @@ ${latestMock.scores.split('\n').map(s => `  - ${s}`).join('\n')}
 2. そのギャップを埋めるために、今週最も優先すべき学習課題を3つ挙げてください。
 3. それらの課題に基づき、具体的な教材名や参考書のページ範囲まで含んだ、実行可能な1週間の学習スケジュールを生成してください。
 4. 学習を継続するための、モチベーションを高める実践的なアドバイスも提供してください。
+5. 最後に、現在の合格可能性、最優先課題、今週のおすすめ学習テーマをまとめたサマリーを生成してください。
 
 【出力形式のルール】
 必ず以下のキーを含むJSONオブジェクトのみを返してください。説明文やマークダウンのコードブロック指定(\`\`\`json)は絶対に含めないでください。
 {
+  "strategy_summary": {
+    "pass_probability": "現在の合格可能性（例: C判定相当, 55%程度）",
+    "priority_tasks": ["最優先課題1", "最優先課題2"],
+    "weekly_theme": "今週のおすすめ学習テーマ"
+  },
   "weekly_schedule": [
     {
       "dayOfWeek": "月曜日",
@@ -1110,6 +1154,7 @@ ${latestMock.scores.split('\n').map(s => `  - ${s}`).join('\n')}
                     const parsedData = JSON.parse(jsonString);
                     
                     const aiData = {
+                        summary: parsedData.strategy_summary,
                         schedule: parsedData.weekly_schedule,
                         advice: parsedData.practical_advice
                     };
@@ -1128,8 +1173,9 @@ ${latestMock.scores.split('\n').map(s => `  - ${s}`).join('\n')}
                 }
             },
             displayAiPlan: (aiData) => {
-                if (!DOMElements.aiAdviceContainer) return;
-                
+                if (aiData && aiData.summary) {
+                    render.strategySummary(aiData.summary);
+                }
                 if (aiData && aiData.advice) {
                     if (typeof marked !== 'undefined') {
                         DOMElements.aiAdviceContainer.innerHTML = marked.parse(aiData.advice);
@@ -1143,6 +1189,61 @@ ${latestMock.scores.split('\n').map(s => `  - ${s}`).join('\n')}
                 if (aiData && aiData.schedule) {
                     state.aiSchedule = aiData.schedule;
                     render.weeklySchedule();
+                }
+            },
+            runMockExamFeedbackAi: async () => {
+                const newMockExamId = localStorage.getItem(CONSTANTS.NEW_MOCK_EXAM_KEY);
+                if (!newMockExamId) return;
+
+                const apiKey = localStorage.getItem(CONSTANTS.API_KEY_KEY);
+                if (!apiKey) return;
+
+                const mockExams = utils.loadData(CONSTANTS.MOCK_EXAMS_KEY);
+                const newExam = mockExams.find(e => e.id === newMockExamId);
+                if (!newExam) {
+                    localStorage.removeItem(CONSTANTS.NEW_MOCK_EXAM_KEY);
+                    return;
+                }
+                
+                const examGoal = utils.loadData(CONSTANTS.EXAM_GOAL_KEY, null);
+                
+                let prompt = `あなたは優秀な受験戦略家です。生徒が新しい模試の結果を記録しました。この結果を分析し、具体的で実行可能な改善アドバイスを生成してください。
+
+【生徒の目標】
+- 志望校: ${examGoal?.school || '未設定'}
+
+【新しい模試結果】
+- 模試名: ${newExam.name}
+- 受験日: ${newExam.date}
+- 結果:
+${newExam.scores.split('\n').map(s => `  - ${s}`).join('\n')}
+- 判定: ${newExam.judgment}
+
+【指示】
+この模試結果から読み取れる最も重要な課題を1つか2つ特定し、それを克服するための具体的な次のアクションを150字以内で提案してください。`;
+
+                try {
+                    const model = 'gemini-1.5-flash';
+                    const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                    const response = await fetch(apiEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
+                    if (!response.ok) throw new Error('API request failed');
+                    const result = await response.json();
+                    const feedback = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (feedback) {
+                        render.addNotification({
+                            id: `mock-feedback-${newExam.id}`,
+                            message: `【AI分析】${newExam.name}の結果を分析しました: ${feedback}`,
+                            action: ''
+                        });
+                    }
+                } catch (error) {
+                    console.error("Mock Exam Feedback AI Error:", error);
+                } finally {
+                    localStorage.removeItem(CONSTANTS.NEW_MOCK_EXAM_KEY);
                 }
             }
         };
@@ -1292,6 +1393,7 @@ ${latestMock.scores.split('\n').map(s => `  - ${s}`).join('\n')}
             } else {
                 actions.runAiFeature({});
                 actions.checkForSurveyNotification();
+                actions.runMockExamFeedbackAi();
             }
 
             DOMElements.body.classList.add('loaded');
