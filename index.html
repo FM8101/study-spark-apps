@@ -97,9 +97,9 @@
         .popup-overlay.visible .popup-content { transform: scale(1); }
         .popup-close-button { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; }
         
-        .popup-form-input { margin-top: 0.25rem; display: block; width: 100%; border-radius: 0.5rem; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); }
-        .theme-dark .popup-form-input { background-color: rgba(120, 120, 128, 0.18); border: 1px solid var(--glass-border-color-dark); color: var(--text-primary-dark); }
-        .theme-light .popup-form-input { background-color: #fff; border: 1px solid #d1d5db; color: var(--text-primary-light); }
+        .popup-form-input, .popup-form-select { margin-top: 0.25rem; display: block; width: 100%; border-radius: 0.5rem; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); }
+        .theme-dark .popup-form-input, .theme-dark .popup-form-select { background-color: rgba(120, 120, 128, 0.18); border: 1px solid var(--glass-border-color-dark); color: var(--text-primary-dark); }
+        .theme-light .popup-form-input, .theme-light .popup-form-select { background-color: #fff; border: 1px solid #d1d5db; color: var(--text-primary-light); }
         
         .sortable-ghost { opacity: 0.4; background: var(--ios-blue); }
 
@@ -168,6 +168,48 @@
 <div class="aurora-background"></div>
 
 <!-- Popups -->
+<div id="initialSurveyPopup" class="popup-overlay">
+    <div class="popup-content glass-card">
+        <h2 class="text-2xl font-bold mb-2">ようこそ StudySparkへ！</h2>
+        <p class="text-sm text-gray-400 mb-6">AIがあなただけの学習計画を作るために、いくつか質問させてください。</p>
+        <form id="initialSurveyForm" class="space-y-4">
+            <div>
+                <label for="learningPurpose" class="block text-sm font-medium mb-1">主な学習目的は何ですか？</label>
+                <select id="learningPurpose" class="popup-form-select">
+                    <option value="受験対策">受験対策</option>
+                    <option value="資格・スキルアップ">資格・スキルアップ</option>
+                    <option value="学校の成績向上">学校の成績向上</option>
+                    <option value="趣味・教養">趣味・教養</option>
+                </select>
+            </div>
+            <div>
+                <label for="learningStyle" class="block text-sm font-medium mb-1">あなたの学習スタイルは？</label>
+                <select id="learningStyle" class="popup-form-select">
+                    <option value="コツコツ派">毎日コツコツ派</option>
+                    <option value="短期集中派">短期集中派</option>
+                    <option value="週末じっくり派">週末じっくり派</option>
+                </select>
+            </div>
+            <div>
+                <label for="weakSubjects" class="block text-sm font-medium mb-1">特に苦手、または強化したい科目は？</label>
+                <input type="text" id="weakSubjects" class="popup-form-input" placeholder="例: 数学、英語長文">
+            </div>
+             <div>
+                <label for="strongSubjects" class="block text-sm font-medium mb-1">得意な科目は何ですか？</label>
+                <input type="text" id="strongSubjects" class="popup-form-input" placeholder="例: 歴史、プログラミング">
+            </div>
+            <div>
+                <label for="mainDevice" class="block text-sm font-medium mb-1">主にどのデバイスで学習しますか？</label>
+                <select id="mainDevice" class="popup-form-select">
+                    <option value="PC">PC・タブレット</option>
+                    <option value="スマートフォン">スマートフォン</option>
+                </select>
+            </div>
+            <button type="submit" class="w-full bg-[var(--ios-blue)] text-white py-2 px-4 rounded-lg hover:bg-blue-700 font-semibold mt-4">学習を始める</button>
+        </form>
+    </div>
+</div>
+
 <div id="aiSettingsPopup" class="popup-overlay glass-card">
     <div class="popup-content">
         <button data-action="close-popup" class="popup-close-button" aria-label="閉じる">&times;</button>
@@ -195,7 +237,7 @@
                     </div>
                     <div>
                         <label for="survey-pace" class="block text-sm font-medium mb-1">今週の学習ペース</label>
-                        <select id="survey-pace" class="popup-form-input">
+                        <select id="survey-pace" class="popup-form-select">
                             <option value="normal">通常通り</option>
                             <option value="relaxed">少しゆっくり</option>
                             <option value="intensive">集中的に</option>
@@ -397,6 +439,8 @@
 
         const DOMElements = {
             body: document.body,
+            initialSurveyPopup: document.getElementById('initialSurveyPopup'),
+            initialSurveyForm: document.getElementById('initialSurveyForm'),
             mainContent: document.getElementById('main-content'),
             weeklyScheduleGrid: document.getElementById('weekly-schedule-grid'),
             weekRangeDisplay: document.getElementById('week-range-display'),
@@ -427,6 +471,8 @@
         };
 
         const CONSTANTS = {
+            INITIAL_SURVEY_COMPLETED_KEY: '学習記録アプリ_初回アンケート完了',
+            USER_PROFILE_KEY: '学習記録アプリ_ユーザープロファイル',
             LAYOUT_ORDER_KEY: '学習記録アプリ_レイアウト順序',
             RECORDS_KEY: '学習記録アプリ_日々の記録',
             REVIEW_ITEMS_KEY: '学習記録アプリ_復習項目',
@@ -929,19 +975,34 @@
                     const records = utils.loadData(CONSTANTS.RECORDS_KEY);
                     const reviewItems = utils.loadData(CONSTANTS.REVIEW_ITEMS_KEY);
                     const surveyData = utils.loadData(CONSTANTS.AI_SURVEY_KEY_PREFIX + currentWeekNumber, null);
+                    const userProfile = utils.loadData(CONSTANTS.USER_PROFILE_KEY, null);
 
                     const basis = {
                         records: `${records.length}件の学習記録`,
                         reviewItems: `${reviewItems.filter(item => !item.isCompleted).length}件の復習項目`,
                         survey: surveyData ? '今週のアンケート回答あり' : '今週のアンケート回答なし',
+                        profile: userProfile ? '基本プロファイルあり' : '基本プロファイルなし'
                     };
                     const basisKey = CONSTANTS.AI_PLAN_BASIS_KEY_PREFIX + currentWeekNumber;
                     utils.saveData(basisKey, basis);
                     
                     const model = 'gemini-1.5-flash';
-                    let prompt = `あなたは優秀な学習プランナーです。以下のユーザーの状況を考慮し、今週1週間の具体的な学習スケジュールと、学習を継続するための実践的なアドバイスを生成してください。
+                    let prompt = `あなたは優秀な学習プランナーです。以下のユーザーの状況を考慮し、今週1週間の具体的な学習スケジュールと、学習を継続するための実践的なアドバイスを生成してください。`;
 
-【ユーザーの状況】
+                    if (userProfile) {
+                        prompt += `
+
+【ユーザーの基本情報】
+- 学習目的: ${userProfile.purpose}
+- 学習スタイル: ${userProfile.style}
+- 苦手・強化したい科目: ${userProfile.weakSubjects}
+- 得意な科目: ${userProfile.strongSubjects}
+- 主な学習デバイス: ${userProfile.device}`;
+                    }
+
+                    prompt += `
+
+【ユーザーの現在の状況】
 - 学習記録: 直近の記録が${records.length}件あります。
 - 復習項目: ${reviewItems.filter(item => !item.isCompleted).length}件の未完了の復習タスクがあります。`;
 
@@ -1152,6 +1213,19 @@
                     utils.triggerConfetti();
                     utils.closeAllPopups();
                     actions.runAiFeature({ forceRefresh: true });
+                } else if (e.target.id === 'initialSurveyForm') {
+                    const userProfile = {
+                        purpose: document.getElementById('learningPurpose').value,
+                        style: document.getElementById('learningStyle').value,
+                        weakSubjects: document.getElementById('weakSubjects').value.trim(),
+                        strongSubjects: document.getElementById('strongSubjects').value.trim(),
+                        device: document.getElementById('mainDevice').value,
+                    };
+                    utils.saveData(CONSTANTS.USER_PROFILE_KEY, userProfile);
+                    utils.saveData(CONSTANTS.INITIAL_SURVEY_COMPLETED_KEY, true);
+                    utils.closeAllPopups();
+                    utils.triggerConfetti();
+                    actions.runAiFeature({ forceRefresh: true });
                 }
             }
         };
@@ -1166,8 +1240,14 @@
             }
             actions.applyCustomLayout();
             render.all();
-            actions.runAiFeature({});
-            actions.checkForSurveyNotification();
+            
+            const isSurveyCompleted = utils.loadData(CONSTANTS.INITIAL_SURVEY_COMPLETED_KEY, false);
+            if (!isSurveyCompleted) {
+                DOMElements.initialSurveyPopup.classList.add('visible');
+            } else {
+                actions.runAiFeature({});
+                actions.checkForSurveyNotification();
+            }
 
             DOMElements.body.classList.add('loaded');
         }
