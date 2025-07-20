@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>記録する | StudySpark</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <!-- Barcode Scanner Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?display=swap&family=Inter:wght@400;500;600;700&family=SF+Pro+Display:wght@400;500;600;700" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style type="text/tailwindcss">
+        :root {
+            --ios-blue: #0A84FF;
+            --ios-orange: #FF9F0A;
+            --ios-green: #30D158;
+            --ios-red: #FF453A;
+            --background-dark: #000000;
+            --card-background-dark: rgba(28, 28, 30, 0.7);
+            --text-primary-dark: #FFFFFF;
+            --text-secondary-dark: #8E8E93;
+            --glass-blur: 16px;
+            --glass-border-color-dark: rgba(255, 255, 255, 0.15);
+            
+            --background-light: #f8fcfa;
+            --card-background-light: #ffffff;
+            --text-primary-light: #0c1c17;
+            --text-secondary-light: #555;
+            --glass-border-color-light: #e6f4ef;
+        }
+        body {
+            font-family: 'SF Pro Display', 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+            opacity: 0;
+        }
+        body.loaded {
+            opacity: 1;
+        }
+        .theme-dark {
+            background-color: var(--background-dark);
+            color: var(--text-primary-dark);
+        }
+        .theme-light {
+            background-color: var(--background-light);
+            color: var(--text-primary-light);
+        }
+        .aurora-background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0;
+            background:
+                radial-gradient(ellipse at 20% 80%, var(--ios-blue) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 30%, var(--ios-orange) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, var(--ios-green) 0%, transparent 60%);
+            animation: aurora-swirl 30s infinite linear alternate;
+            filter: blur(40px);
+            transition: opacity 0.5s;
+        }
+        .theme-dark .aurora-background { opacity: 0.3; }
+
+        .glass-card {
+            transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+            border-radius: 20px;
+        }
+        .theme-dark .glass-card {
+            background-color: var(--card-background-dark);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border-color-dark);
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
+        }
+        .theme-light .glass-card {
+            background-color: var(--card-background-light);
+            border: 1px solid var(--glass-border-color-light);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        
+        .form-input, .form-select, .form-textarea {
+            margin-top: 0.25rem; display: block; width: 100%;
+            border-radius: 0.5rem; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+            padding: 0.75rem 1rem;
+        }
+        .theme-dark .form-input, .theme-dark .form-select, .theme-dark .form-textarea {
+             background-color: rgba(120, 120, 128, 0.18);
+             border: 1px solid var(--glass-border-color-dark);
+             color: var(--text-primary-dark);
+        }
+         .theme-light .form-input, .theme-light .form-select, .theme-light .form-textarea {
+             background-color: #fff;
+             border: 1px solid #d1d5db;
+             color: var(--text-primary-light);
+        }
+        
+        .hidden { display: none; }
+
+        .hover-lift {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+        }
+        
+        .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 1050; opacity: 0; transition: opacity 0.3s ease; visibility: hidden; }
+        .popup-overlay.visible { opacity: 1; visibility: visible; }
+        .popup-content { padding: 2rem; border-radius: 20px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.3s ease; position: relative; }
+        .popup-overlay.visible .popup-content { transform: scale(1); }
+        
+        .fab-container { position: fixed; bottom: 2rem; right: 2rem; z-index: 1000; }
+        .fab { width: 56px; height: 56px; border-radius: 50%; background-color: var(--ios-blue); color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); transition: transform 0.3s ease, background-color 0.3s ease; border: none; cursor: pointer; }
+        .fab:hover { transform: scale(1.05); background-color: #0069CC; }
+        .fab-options { position: absolute; bottom: 64px; right: 0; display: flex; flex-direction: column; gap: 0.75rem; align-items: flex-end; visibility: hidden; opacity: 0; transform: translateY(10px); transition: all 0.3s ease; }
+        .fab-container.open .fab-options { visibility: visible; opacity: 1; transform: translateY(0); }
+        .fab-option { display: flex; align-items: center; gap: 0.75rem; background-color: var(--card-background-dark); color: var(--text-primary-dark); padding: 0.75rem 1rem; border-radius: 12px; font-size: 0.875rem; font-weight: 500; white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,0.15); cursor: pointer; border: 1px solid var(--glass-border-color-dark); }
+        .theme-light .fab-option { background-color: var(--card-background-light); color: var(--text-primary-light); border-color: var(--glass-border-color-light); }
+        .fab-container.open .fab { transform: rotate(45deg); }
+
+        .library-card-bg { background-size: cover; background-position: center; position: relative; }
+        .library-card-overlay { background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 60%); }
+
+        .drop-zone { border: 2px dashed var(--glass-border-color-dark); border-radius: 0.5rem; padding: 1.5rem; text-align: center; cursor: pointer; transition: border-color 0.3s, background-color 0.3s; }
+        .theme-light .drop-zone { border-color: #ccc; }
+        .drop-zone.dragover { border-color: var(--ios-blue); background-color: rgba(10, 132, 255, 0.1); }
+        #image-preview { max-height: 120px; }
+
+        .timer-display-container { min-height: 84px; }
+        .timer-display { font-size: clamp(2.5rem, 15vw, 5rem); font-weight: 700; letter-spacing: 0.05em; font-family: 'Inter', monospace; }
+        .timer-display input { max-width: 2.5em; }
+        .timer-button { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 2px solid transparent; transition: all 0.2s ease; }
+        .timer-button.play { background-color: rgba(48, 209, 88, 0.2); color: var(--ios-green); border-color: var(--ios-green); }
+        .timer-button.pause { background-color: rgba(255, 159, 10, 0.2); color: var(--ios-orange); border-color: var(--ios-orange); }
+        .timer-button.reset { background-color: rgba(120, 120, 128, 0.18); color: var(--text-secondary-dark); }
+        
+        #barcode-scanner-container video, #barcode-scanner-container canvas {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        #barcode-scanner-container canvas.drawingBuffer {
+            display: none;
+        }
+    </style>
+    <script>
+        const savedTheme = localStorage.getItem('学習記録アプリ_テーマ') || 'dark';
+        document.documentElement.className = `theme-${savedTheme}`;
+    </script>
+</head>
+<body class="opacity-0 transition-opacity duration-500">
+<div class="aurora-background"></div>
+
+<!-- Popups -->
+<div id="addTextbookPopup" class="popup-overlay">
+    <div class="popup-content glass-card">
+        <h2 id="textbook-form-title" class="text-xl font-bold mb-4"></h2>
+        <form id="textbook-form" class="space-y-4">
+            <input type="hidden" id="original-textbook-name">
+            <div>
+                <label for="textbook-name" class="block text-sm font-medium mb-1">教材名</label>
+                <div class="flex gap-2">
+                    <input type="text" id="textbook-name" class="form-input flex-grow" required>
+                    <button type="button" data-action="open-barcode-scanner" class="p-3 rounded-lg bg-black/20 hover:bg-black/30 font-semibold flex-shrink-0" title="バーコードをスキャン">
+                        <i class="fas fa-barcode"></i>
+                    </button>
+                </div>
+            </div>
+            <div>
+                <label for="subject-name" class="block text-sm font-medium mb-1">教科</label>
+                <input type="text" id="subject-name" class="form-input" placeholder="例: 数学, 英語">
+            </div>
+            <div>
+                <label for="textbook-info" class="block text-sm font-medium mb-1">教材情報 (任意)</label>
+                <textarea id="textbook-info" class="form-textarea" rows="3" placeholder="例: 出版社, 著者など"></textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">表紙画像 (任意)</label>
+                <div id="drop-zone" class="drop-zone">
+                    <div id="drop-zone-text">
+                        <i class="fas fa-image text-3xl text-gray-500"></i>
+                        <p class="mt-2 text-sm">ここにファイルをドラッグ&ドロップ</p>
+                        <p class="text-xs text-gray-500">または</p>
+                        <button type="button" data-action="select-image-file" class="mt-1 text-sm text-[var(--ios-blue)] font-semibold">ファイルを選択</button>
+                    </div>
+                    <div id="preview-container" class="hidden relative">
+                        <img id="image-preview" class="rounded-lg mx-auto">
+                        <button type="button" data-action="remove-image" class="absolute -top-2 -right-2 bg-black/50 text-white rounded-full w-6 h-6 flex items-center justify-content: center">&times;</button>
+                    </div>
+                </div>
+                <input type="file" id="textbook-image-input" class="hidden" accept="image/*">
+            </div>
+            <div class="flex justify-end gap-4 pt-4">
+                <button type="button" data-action="close-popup" class="px-5 py-2 rounded-lg bg-black/20 hover:bg-black/30 font-semibold">キャンセル</button>
+                <button type="submit" class="px-5 py-2 rounded-lg bg-[var(--ios-blue)] text-white hover:bg-blue-600 font-semibold">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="addRecordPopup" class="popup-overlay">
+    <div class="popup-content glass-card">
+        <h2 class="text-xl font-bold mb-4">学習を記録</h2>
+        <form id="record-form" class="space-y-4">
+            <div>
+                <label for="record-textbook-select" class="block text-sm font-medium mb-1">教材</label>
+                <select id="record-textbook-select" class="form-select" required></select>
+            </div>
+            <div>
+                <label for="record-date" class="block text-sm font-medium mb-1">学習日</label>
+                <input type="date" id="record-date" class="form-input" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">学習時間</label>
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" id="learning-hours" min="0" max="23" value="0" class="form-input" placeholder="時間">
+                    <input type="number" id="learning-minutes" min="0" max="59" value="30" class="form-input" placeholder="分" required>
+                </div>
+            </div>
+            <div>
+                <label for="learning-scope" class="block text-sm font-medium mb-1">学習範囲 (任意)</label>
+                <input type="text" id="learning-scope" class="form-input" placeholder="例: p.150-165">
+            </div>
+            <div class="flex items-start pt-2">
+                <div class="flex items-center h-5"><input id="is-review-item-checkbox" type="checkbox" class="h-4 w-4 rounded bg-gray-700 border-gray-600"></div>
+                <div class="ml-3 text-sm"><label for="is-review-item-checkbox" class="font-medium">暗記項目として登録する</label></div>
+            </div>
+            <div class="flex justify-end gap-4 pt-4">
+                <button type="button" data-action="close-popup" class="px-5 py-2 rounded-lg bg-black/20 hover:bg-black/30 font-semibold">キャンセル</button>
+                <button type="submit" class="px-5 py-2 rounded-lg bg-[var(--ios-blue)] text-white hover:bg-blue-600 font-semibold">記録する</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="barcodeScannerPopup" class="popup-overlay">
+    <div class="popup-content glass-card">
+        <h2 class="text-xl font-bold mb-4">バーコードをスキャン</h2>
+        <p class="text-sm text-gray-400 mb-4">教材の裏にあるバーコード(ISBN)をカメラにかざしてください。</p>
+        <div id="barcode-scanner-container" class="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
+            <div id="barcode-scanner" class="absolute inset-0"></div>
+            <div class="absolute inset-0 border-4 border-red-500/50 m-auto" style="width: 80%; height: 40%;"></div>
+        </div>
+        <div id="scanner-status" class="text-center mt-4 text-sm"></div>
+        <button type="button" data-action="close-barcode-scanner" class="w-full mt-4 px-5 py-2 rounded-lg bg-black/20 hover:bg-black/30 font-semibold">キャンセル</button>
+    </div>
+</div>
+
+
+<div class="relative flex size-full min-h-screen flex-col bg-transparent group/design-root overflow-x-hidden">
+<header class="sticky top-0 z-50 px-4 sm:px-6 py-3 shadow-sm border-b glass-card !rounded-none">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="size-9 text-[var(--ios-blue)]">
+                <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="logoGradientHeader" x1="0%" x2="100%" y1="0%" y2="100%"><stop offset="0%" style="stop-color:var(--ios-blue);stop-opacity:1"></stop><stop offset="100%" style="stop-color:var(--ios-orange);stop-opacity:1"></stop></linearGradient></defs><path d="M24 4C25.7818 14.2173 33.7827 22.2182 44 24C33.7827 25.7818 25.7818 33.7827 24 44C22.2182 33.7827 14.2173 25.7818 4 24C14.2173 22.2182 22.2182 14.2173 24 4Z" fill="url(#logoGradientHeader)"></path></svg>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-semibold leading-tight tracking-tight">StudySpark</h2>
+        </div>
+        <nav class="hidden md:flex items-center gap-1 p-1 rounded-xl">
+            <a class="px-3 py-2 text-sm font-medium rounded-lg" href="home.html">ホーム</a>
+            <a class="px-3 py-2 text-sm font-medium rounded-lg bg-[var(--ios-blue)] text-white" href="#">記録</a>
+            <a class="px-3 py-2 text-sm font-medium rounded-lg" href="#">データ</a>
+            <a class="px-3 py-2 text-sm font-medium rounded-lg" href="#">その他</a>
+        </nav>
+        <div class="flex items-center gap-3 sm:gap-4">
+            <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-9 border-2 border-[var(--ios-blue)] shadow-lg" style='background-image: url("https://placehold.co/100x100/000000/FFFFFF?text=U");'></div>
+        </div>
+    </div>
+</header>
+<main class="px-4 sm:px-6 md:px-10 lg:px-16 flex flex-1 justify-center py-8 sm:py-10">
+    <div id="main-container" class="layout-content-container flex flex-col w-full max-w-5xl gap-8 sm:gap-10">
+        
+        <div id="library-view">
+            <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">教材ライブラリ</h1>
+            </div>
+            <button data-action="show-timer-view" class="w-full text-left p-6 glass-card hover-lift mb-8">
+                <div class="flex items-center gap-4">
+                    <i class="fas fa-stopwatch text-3xl text-[var(--ios-blue)]"></i>
+                    <div>
+                        <h2 class="font-semibold text-lg">集中モードで計測する</h2>
+                        <p class="text-sm text-gray-400">ストップウォッチやタイマーを使って学習を記録します。</p>
+                    </div>
+                </div>
+            </button>
+            <div id="library-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <p id="libraryEmptyMessage" class="hidden mt-6 text-center text-gray-400 glass-card p-6">まだ教材が登録されていません。<br>右下の「＋」ボタンから追加してください。</p>
+        </div>
+
+        <div id="timer-view" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">集中モード</h1>
+                <button data-action="show-library-view" class="px-4 py-2 rounded-lg bg-black/20 hover:bg-black/30 font-semibold">
+                    <i class="fas fa-arrow-left mr-2"></i>ライブラリに戻る
+                </button>
+            </div>
+            <div class="glass-card p-6 sm:p-8">
+                <div class="flex justify-center border-b border-[var(--glass-border-color-dark)] mb-6">
+                    <button data-action="switch-timer-mode" data-mode="stopwatch" class="timer-mode-btn flex-1 pb-3 text-center font-semibold border-b-2 border-[var(--ios-blue)] text-[var(--ios-blue)]">ストップウォッチ</button>
+                    <button data-action="switch-timer-mode" data-mode="timer" class="timer-mode-btn flex-1 pb-3 text-center font-semibold border-b-2 border-transparent text-gray-400">タイマー</button>
+                </div>
+
+                <div class="timer-display-container flex justify-center items-center">
+                    <div id="stopwatch-mode" class="text-center timer-display">00:00:00</div>
+                    <div id="timer-mode" class="hidden w-full">
+                        <div class="text-center timer-display hidden" id="timer-display-countdown">00:25:00</div>
+                        <div class="grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-x-1 timer-display" id="timer-display-inputs">
+                            <input type="number" id="timer-hours" class="bg-transparent text-center outline-none w-full" value="00" min="0" max="23">
+                            <span>:</span>
+                            <input type="number" id="timer-minutes" class="bg-transparent text-center outline-none w-full" value="25" min="0" max="59">
+                            <span>:</span>
+                            <input type="number" id="timer-seconds" class="bg-transparent text-center outline-none w-full" value="00" min="0" max="59">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center items-center gap-6 mt-8">
+                    <div id="stopwatch-controls" class="flex justify-center items-center gap-6">
+                        <button data-action="reset-stopwatch" class="timer-button reset"><i class="fas fa-redo"></i></button>
+                        <button data-action="toggle-stopwatch" class="timer-button play"><i class="fas fa-play"></i></button>
+                    </div>
+                    <div id="timer-controls" class="hidden justify-center items-center gap-6">
+                        <button data-action="reset-timer" class="timer-button reset"><i class="fas fa-redo"></i></button>
+                        <button data-action="toggle-timer" class="timer-button play"><i class="fas fa-play"></i></button>
+                    </div>
+                </div>
+                
+                <div class="mt-8 border-t border-[var(--glass-border-color-dark)] pt-6">
+                     <label for="timer-textbook-select" class="block text-sm font-medium mb-1">記録する教材</label>
+                     <select id="timer-textbook-select" class="form-select"></select>
+                     <button data-action="record-measured-time" class="w-full mt-4 px-5 py-3 rounded-lg bg-[var(--ios-green)] text-white font-semibold disabled:opacity-50" disabled>
+                        <i class="fas fa-check mr-2"></i>学習を記録
+                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</div>
+
+<!-- フローティングアクションボタン -->
+<div id="fab-container" class="fab-container">
+    <div class="fab-options">
+        <div data-action="open-record-form" class="fab-option">
+            <span>学習を手入力</span>
+            <i class="fas fa-pencil-alt"></i>
+        </div>
+        <div data-action="open-textbook-form" class="fab-option">
+            <span>教材を追加</span>
+            <i class="fas fa-book"></i>
+        </div>
+    </div>
+    <button data-action="toggle-fab" class="fab">
+        <i class="fas fa-plus"></i>
+    </button>
+</div>
+
+<script>
+(() => {
+    document.addEventListener('DOMContentLoaded', () => {
+        let currentImageFile = null;
+        let timerState = {
+            stopwatch: { interval: null, seconds: 0, isRunning: false },
+            timer: { interval: null, totalSeconds: 0, remainingSeconds: 0, isRunning: false },
+        };
+        let audioContext;
+
+        const DOMElements = {
+            body: document.body,
+            libraryView: document.getElementById('library-view'),
+            timerView: document.getElementById('timer-view'),
+            libraryList: document.getElementById('library-list'),
+            libraryEmptyMessage: document.getElementById('libraryEmptyMessage'),
+            fabContainer: document.getElementById('fab-container'),
+            addTextbookPopup: document.getElementById('addTextbookPopup'),
+            addRecordPopup: document.getElementById('addRecordPopup'),
+            barcodeScannerPopup: document.getElementById('barcodeScannerPopup'),
+            textbookForm: document.getElementById('textbook-form'),
+            recordForm: document.getElementById('record-form'),
+            dropZone: document.getElementById('drop-zone'),
+            dropZoneText: document.getElementById('drop-zone-text'),
+            previewContainer: document.getElementById('preview-container'),
+            imagePreview: document.getElementById('image-preview'),
+            textbookImageInput: document.getElementById('textbook-image-input'),
+            stopwatchDisplay: document.getElementById('stopwatch-mode'),
+            timerDisplayInputs: document.getElementById('timer-display-inputs'),
+            timerDisplayCountdown: document.getElementById('timer-display-countdown'),
+            timerModeContainer: document.getElementById('timer-mode'),
+            timerTextbookSelect: document.getElementById('timer-textbook-select'),
+            recordMeasuredTimeBtn: document.querySelector('[data-action="record-measured-time"]'),
+            stopwatchControls: document.getElementById('stopwatch-controls'),
+            timerControls: document.getElementById('timer-controls'),
+            scannerStatus: document.getElementById('scanner-status'),
+        };
+
+        const CONSTANTS = {
+            LIBRARY_KEY: '学習記録アプリ_ライブラリ',
+            RECORDS_KEY: '学習記録アプリ_日々の記録',
+            REVIEW_ITEMS_KEY: '学習記録アプリ_復習項目',
+            REVIEW_INTERVALS: [1, 3, 7, 14, 30, 60],
+        };
+
+        const utils = {
+            loadData: (key, def = []) => { try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; } },
+            saveData: (key, data) => localStorage.setItem(key, JSON.stringify(data)),
+            dateToYYYYMMDD: (d) => d.toISOString().split('T')[0],
+            addDays: (d, days) => { const r = new Date(d); r.setDate(r.getDate() + days); return r; },
+            parseDateAsLocal: (dateString) => {
+                const [year, month, day] = dateString.split('-').map(Number);
+                return new Date(year, month - 1, day);
+            },
+            showPopup: (el) => el.classList.add('visible'),
+            hidePopup: (el) => el.classList.remove('visible'),
+            processImage: (file, maxWidth = 400, quality = 0.8) => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            let { width, height } = img;
+                            if (width > maxWidth) {
+                                height *= maxWidth / width;
+                                width = maxWidth;
+                            }
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            resolve(canvas.toDataURL('image/jpeg', quality));
+                        };
+                        img.onerror = reject;
+                        img.src = event.target.result;
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                });
+            },
+            formatTime: (totalSeconds) => {
+                const h = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
+                const m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
+                const s = (totalSeconds % 60).toString().padStart(2, '0');
+                return `${h}:${m}:${s}`;
+            },
+            playNotificationSound: () => {
+                if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 1);
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 1);
+            }
+        };
+
+        const render = {
+            library: () => {
+                const library = utils.loadData(CONSTANTS.LIBRARY_KEY);
+                DOMElements.libraryList.innerHTML = '';
+                DOMElements.libraryEmptyMessage.classList.toggle('hidden', library.length > 0);
+
+                library.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'glass-card hover-lift flex flex-col justify-between overflow-hidden relative aspect-[4/3] library-card-bg cursor-pointer';
+                    card.dataset.action = 'record-from-card';
+                    card.dataset.textbook = item.textbook;
+                    const bgImage = item.image ? `url('${item.image}')` : `url('https://placehold.co/400x300/0A0A0A/FFFFFF?text=${encodeURIComponent(item.textbook)}')`;
+                    card.style.backgroundImage = bgImage;
+                    
+                    card.innerHTML = `
+                        <div class="library-card-overlay p-4 flex flex-col justify-end h-full z-10">
+                            <h4 class="font-bold text-lg truncate text-white" title="${item.textbook}">${item.textbook}</h4>
+                            <p class="text-sm text-gray-300">${item.subject || '教科未設定'}</p>
+                            <p class="text-xs text-gray-400 mt-1 truncate">${item.info || ''}</p>
+                        </div>
+                        <div class="absolute top-2 right-2 z-20">
+                            <button data-action="edit-textbook" data-textbook="${item.textbook}" class="h-8 w-8 rounded-full flex items-center justify-center bg-black/30 text-white hover:bg-black/50"><i class="fas fa-edit"></i></button>
+                        </div>
+                    `;
+                    DOMElements.libraryList.appendChild(card);
+                });
+            },
+            timerTextbookSelect: () => {
+                const library = utils.loadData(CONSTANTS.LIBRARY_KEY);
+                DOMElements.timerTextbookSelect.innerHTML = '';
+                if (library.length === 0) {
+                    DOMElements.timerTextbookSelect.innerHTML = '<option value="">教材がありません</option>';
+                }
+                library.forEach(item => {
+                    DOMElements.timerTextbookSelect.innerHTML += `<option value="${item.textbook}">${item.textbook}</option>`;
+                });
+            }
+        };
+
+        const actions = {
+            handleFileSelect: async (file) => {
+                if (!file || !file.type.startsWith('image/')) return;
+                try {
+                    const compressedImageDataUrl = await utils.processImage(file);
+                    currentImageFile = compressedImageDataUrl;
+                    DOMElements.imagePreview.src = compressedImageDataUrl;
+                    DOMElements.previewContainer.classList.remove('hidden');
+                    DOMElements.dropZoneText.classList.add('hidden');
+                } catch (error) {
+                    alert("画像の処理に失敗しました。");
+                }
+            },
+            clearImagePreview: () => {
+                currentImageFile = null;
+                DOMElements.textbookImageInput.value = '';
+                DOMElements.imagePreview.src = '';
+                DOMElements.previewContainer.classList.add('hidden');
+                DOMElements.dropZoneText.classList.remove('hidden');
+            },
+            openTextbookForm: (item = null) => {
+                DOMElements.textbookForm.reset();
+                actions.clearImagePreview();
+                const title = document.getElementById('textbook-form-title');
+                const nameInput = document.getElementById('textbook-name');
+                const subjectInput = document.getElementById('subject-name');
+                const infoInput = document.getElementById('textbook-info');
+                const originalNameInput = document.getElementById('original-textbook-name');
+
+                if (item) {
+                    title.textContent = '教材を編集';
+                    nameInput.value = item.textbook;
+                    subjectInput.value = item.subject || '';
+                    infoInput.value = item.info || '';
+                    originalNameInput.value = item.textbook;
+                    if (item.image) {
+                        currentImageFile = item.image;
+                        DOMElements.imagePreview.src = item.image;
+                        DOMElements.previewContainer.classList.remove('hidden');
+                        DOMElements.dropZoneText.classList.add('hidden');
+                    }
+                } else {
+                    title.textContent = '新しい教材を追加';
+                    originalNameInput.value = '';
+                }
+                utils.showPopup(DOMElements.addTextbookPopup);
+            },
+            openRecordForm: (options = {}) => {
+                const { selectedTextbook, totalMinutes } = options;
+                DOMElements.recordForm.reset();
+                document.getElementById('record-date').value = utils.dateToYYYYMMDD(new Date());
+                const select = document.getElementById('record-textbook-select');
+                const library = utils.loadData(CONSTANTS.LIBRARY_KEY);
+                
+                select.innerHTML = '<option value="">教材を選択してください</option>';
+                if (library.length === 0) {
+                    alert('先に教材を追加してください。');
+                    actions.openTextbookForm();
+                    return;
+                }
+                library.forEach(item => {
+                    select.innerHTML += `<option value="${item.textbook}">${item.textbook}</option>`;
+                });
+
+                if (selectedTextbook) select.value = selectedTextbook;
+                if (totalMinutes) {
+                    document.getElementById('learning-hours').value = Math.floor(totalMinutes / 60);
+                    document.getElementById('learning-minutes').value = totalMinutes % 60;
+                }
+
+                utils.showPopup(DOMElements.addRecordPopup);
+            },
+            saveTextbook: (e) => {
+                e.preventDefault();
+                const name = document.getElementById('textbook-name').value.trim();
+                const subject = document.getElementById('subject-name').value.trim();
+                const info = document.getElementById('textbook-info').value.trim();
+                const originalName = document.getElementById('original-textbook-name').value;
+                if (!name) return;
+
+                let library = utils.loadData(CONSTANTS.LIBRARY_KEY);
+                if (originalName) {
+                    const item = library.find(i => i.textbook === originalName);
+                    if (item) {
+                        item.textbook = name;
+                        item.subject = subject;
+                        item.info = info;
+                        item.image = currentImageFile;
+                    }
+                } else {
+                    if (library.some(i => i.textbook === name)) {
+                        alert('同じ名前の教材が既に存在します。');
+                        return;
+                    }
+                    library.push({ textbook: name, subject, info, lastStudied: null, image: currentImageFile });
+                }
+                utils.saveData(CONSTANTS.LIBRARY_KEY, library);
+                render.library();
+                utils.hidePopup(DOMElements.addTextbookPopup);
+            },
+            saveRecord: (e) => {
+                e.preventDefault();
+                const textbook = document.getElementById('record-textbook-select').value;
+                const date = document.getElementById('record-date').value;
+                const hours = parseInt(document.getElementById('learning-hours').value) || 0;
+                const minutes = parseInt(document.getElementById('learning-minutes').value) || 0;
+                const totalMinutes = hours * 60 + minutes;
+
+                if (!textbook || totalMinutes === 0) {
+                    alert('教材と学習時間を入力してください。');
+                    return;
+                }
+
+                const records = utils.loadData(CONSTANTS.RECORDS_KEY);
+                const newRecord = {
+                    id: Date.now().toString(),
+                    date, textbook, time: totalMinutes,
+                    scope: document.getElementById('learning-scope').value.trim(),
+                };
+                records.push(newRecord);
+                utils.saveData(CONSTANTS.RECORDS_KEY, records);
+
+                let library = utils.loadData(CONSTANTS.LIBRARY_KEY);
+                const item = library.find(i => i.textbook === textbook);
+                if (item) {
+                    item.lastStudied = date;
+                    utils.saveData(CONSTANTS.LIBRARY_KEY, library);
+                }
+
+                if (document.getElementById('is-review-item-checkbox').checked) {
+                    const reviewItems = utils.loadData(CONSTANTS.REVIEW_ITEMS_KEY);
+                    const firstInterval = CONSTANTS.REVIEW_INTERVALS[0];
+                    const learningDate = utils.parseDateAsLocal(date);
+                    const nextReviewDate = utils.addDays(learningDate, firstInterval);
+                    
+                    const newReviewItem = {
+                        id: `review-${newRecord.id}`,
+                        textbook,
+                        subject: item ? item.subject : '',
+                        scope: newRecord.scope,
+                        nextReviewDate: utils.dateToYYYYMMDD(nextReviewDate),
+                        reviewStage: 0,
+                        isCompleted: false
+                    };
+                    reviewItems.push(newReviewItem);
+                    utils.saveData(CONSTANTS.REVIEW_ITEMS_KEY, reviewItems);
+                }
+                
+                alert('学習を記録しました！');
+                utils.hidePopup(DOMElements.addRecordPopup);
+                render.library();
+            },
+            startBarcodeScanner: () => {
+                utils.showPopup(DOMElements.barcodeScannerPopup);
+                DOMElements.scannerStatus.textContent = 'カメラを起動中...';
+
+                Quagga.init({
+                    inputStream: {
+                        name: "Live",
+                        type: "LiveStream",
+                        target: document.querySelector('#barcode-scanner'),
+                        constraints: {
+                            width: 480,
+                            height: 320,
+                            facingMode: "environment"
+                        },
+                    },
+                    decoder: {
+                        readers: ["ean_reader"]
+                    },
+                }, function(err) {
+                    if (err) {
+                        console.error(err);
+                        DOMElements.scannerStatus.textContent = 'カメラの起動に失敗しました。';
+                        return;
+                    }
+                    DOMElements.scannerStatus.textContent = 'スキャン待機中...';
+                    Quagga.start();
+                });
+
+                Quagga.onDetected(actions.onBarcodeDetected);
+            },
+            stopBarcodeScanner: () => {
+                Quagga.offDetected(actions.onBarcodeDetected);
+                Quagga.stop();
+                utils.hidePopup(DOMElements.barcodeScannerPopup);
+            },
+            fetchBookInfo: async (isbn) => {
+                DOMElements.scannerStatus.textContent = `ISBN: ${isbn} の情報を検索中...`;
+                try {
+                    const response = await fetch(`https://api.openbd.jp/v1/get?isbn=${isbn}`);
+                    if (!response.ok) throw new Error('Network response was not ok.');
+                    const data = await response.json();
+                    if (data && data.length > 0 && data[0]) {
+                        const summary = data[0].summary;
+                        return {
+                            title: summary.title,
+                            author: summary.author,
+                            publisher: summary.publisher,
+                            cover: summary.cover ? summary.cover : null,
+                        };
+                    }
+                    return null;
+                } catch (error) {
+                    console.error("Failed to fetch book info:", error);
+                    return null;
+                }
+            },
+            onBarcodeDetected: async (data) => {
+                const isbn = data.codeResult.code;
+                if (!isbn.startsWith('978') && !isbn.startsWith('979')) {
+                    return; // Ignore non-ISBN barcodes
+                }
+                
+                Quagga.pause();
+                const bookInfo = await actions.fetchBookInfo(isbn);
+                actions.stopBarcodeScanner();
+
+                if (bookInfo) {
+                    document.getElementById('textbook-name').value = bookInfo.title || '';
+                    document.getElementById('subject-name').value = ''; // Clear subject
+                    let infoText = '';
+                    if (bookInfo.publisher) infoText += `出版社: ${bookInfo.publisher}\n`;
+                    if (bookInfo.author) infoText += `著者: ${bookInfo.author}`;
+                    document.getElementById('textbook-info').value = infoText.trim();
+
+                    if (bookInfo.cover) {
+                        currentImageFile = bookInfo.cover; // Store URL directly
+                        DOMElements.imagePreview.src = bookInfo.cover;
+                        DOMElements.previewContainer.classList.remove('hidden');
+                        DOMElements.dropZoneText.classList.add('hidden');
+                    }
+                    alert('書籍情報を取得しました！');
+                } else {
+                    alert(`ISBN: ${isbn} の書籍情報が見つかりませんでした。手動で入力してください。`);
+                }
+            },
+            toggleStopwatch: (btn) => {
+                timerState.stopwatch.isRunning = !timerState.stopwatch.isRunning;
+                if (timerState.stopwatch.isRunning) {
+                    btn.innerHTML = '<i class="fas fa-pause"></i>';
+                    btn.classList.remove('play');
+                    btn.classList.add('pause');
+                    timerState.stopwatch.interval = setInterval(() => {
+                        timerState.stopwatch.seconds++;
+                        DOMElements.stopwatchDisplay.textContent = utils.formatTime(timerState.stopwatch.seconds);
+                        DOMElements.recordMeasuredTimeBtn.disabled = false;
+                    }, 1000);
+                } else {
+                    btn.innerHTML = '<i class="fas fa-play"></i>';
+                    btn.classList.remove('pause');
+                    btn.classList.add('play');
+                    clearInterval(timerState.stopwatch.interval);
+                }
+            },
+            resetStopwatch: () => {
+                clearInterval(timerState.stopwatch.interval);
+                timerState.stopwatch.isRunning = false;
+                timerState.stopwatch.seconds = 0;
+                DOMElements.stopwatchDisplay.textContent = '00:00:00';
+                const btn = DOMElements.stopwatchControls.querySelector('[data-action="toggle-stopwatch"]');
+                if (btn) {
+                    btn.innerHTML = '<i class="fas fa-play"></i>';
+                    btn.classList.remove('pause');
+                    btn.classList.add('play');
+                }
+                DOMElements.recordMeasuredTimeBtn.disabled = true;
+            },
+            toggleTimer: (btn) => {
+                timerState.timer.isRunning = !timerState.timer.isRunning;
+                if (timerState.timer.isRunning) {
+                    const h = parseInt(document.getElementById('timer-hours').value) || 0;
+                    const m = parseInt(document.getElementById('timer-minutes').value) || 0;
+                    const s = parseInt(document.getElementById('timer-seconds').value) || 0;
+                    if (timerState.timer.remainingSeconds <= 0) {
+                        timerState.timer.totalSeconds = h * 3600 + m * 60 + s;
+                        timerState.timer.remainingSeconds = timerState.timer.totalSeconds;
+                    }
+                    if (timerState.timer.remainingSeconds <= 0) {
+                        timerState.timer.isRunning = false;
+                        return;
+                    }
+                    btn.innerHTML = '<i class="fas fa-pause"></i>';
+                    btn.classList.remove('play');
+                    btn.classList.add('pause');
+                    DOMElements.timerDisplayInputs.classList.add('hidden');
+                    DOMElements.timerDisplayCountdown.classList.remove('hidden');
+                    timerState.timer.interval = setInterval(() => {
+                        timerState.timer.remainingSeconds--;
+                        DOMElements.timerDisplayCountdown.textContent = utils.formatTime(timerState.timer.remainingSeconds);
+                        if (timerState.timer.remainingSeconds <= 0) {
+                            actions.resetTimer();
+                            utils.playNotificationSound();
+                            DOMElements.recordMeasuredTimeBtn.disabled = false;
+                        }
+                    }, 1000);
+                } else {
+                    btn.innerHTML = '<i class="fas fa-play"></i>';
+                    btn.classList.remove('pause');
+                    btn.classList.add('play');
+                    clearInterval(timerState.timer.interval);
+                }
+            },
+            resetTimer: () => {
+                clearInterval(timerState.timer.interval);
+                timerState.timer.isRunning = false;
+                timerState.timer.remainingSeconds = 0;
+                DOMElements.timerDisplayInputs.classList.remove('hidden');
+                DOMElements.timerDisplayCountdown.classList.add('hidden');
+                const btn = DOMElements.timerControls.querySelector('[data-action="toggle-timer"]');
+                if(btn) {
+                    btn.innerHTML = '<i class="fas fa-play"></i>';
+                    btn.classList.remove('pause');
+                    btn.classList.add('play');
+                }
+            },
+        };
+
+        DOMElements.body.addEventListener('click', (e) => {
+            const actionTarget = e.target.closest('[data-action]');
+            if (!actionTarget) return;
+
+            const action = actionTarget.dataset.action;
+            const textbookName = actionTarget.dataset.textbook;
+
+            switch(action) {
+                case 'toggle-fab': DOMElements.fabContainer.classList.toggle('open'); break;
+                case 'open-textbook-form': actions.openTextbookForm(); DOMElements.fabContainer.classList.remove('open'); break;
+                case 'open-record-form': actions.openRecordForm(); DOMElements.fabContainer.classList.remove('open'); break;
+                case 'close-popup': utils.hidePopup(actionTarget.closest('.popup-overlay')); break;
+                case 'select-image-file': DOMElements.textbookImageInput.click(); break;
+                case 'remove-image': actions.clearImagePreview(); break;
+                case 'open-barcode-scanner': actions.startBarcodeScanner(); break;
+                case 'close-barcode-scanner': actions.stopBarcodeScanner(); break;
+                case 'edit-textbook':
+                    e.stopPropagation();
+                    const library = utils.loadData(CONSTANTS.LIBRARY_KEY);
+                    const itemToEdit = library.find(i => i.textbook === textbookName);
+                    if (itemToEdit) actions.openTextbookForm(itemToEdit);
+                    break;
+                case 'record-from-card':
+                    actions.openRecordForm({ selectedTextbook: textbookName });
+                    break;
+                case 'show-timer-view':
+                    DOMElements.libraryView.classList.add('hidden');
+                    DOMElements.timerView.classList.remove('hidden');
+                    render.timerTextbookSelect();
+                    break;
+                case 'show-library-view':
+                    DOMElements.timerView.classList.add('hidden');
+                    DOMElements.libraryView.classList.remove('hidden');
+                    break;
+                case 'switch-timer-mode':
+                    document.querySelectorAll('.timer-mode-btn').forEach(btn => {
+                        btn.classList.remove('border-[var(--ios-blue)]', 'text-[var(--ios-blue)]');
+                        btn.classList.add('border-transparent', 'text-gray-400');
+                    });
+                    actionTarget.classList.add('border-[var(--ios-blue)]', 'text-[var(--ios-blue)]');
+                    actionTarget.classList.remove('border-transparent', 'text-gray-400');
+                    if (actionTarget.dataset.mode === 'timer') {
+                        DOMElements.stopwatchDisplay.classList.add('hidden');
+                        DOMElements.timerModeContainer.classList.remove('hidden');
+                        DOMElements.stopwatchControls.classList.add('hidden');
+                        DOMElements.timerControls.classList.remove('hidden');
+                    } else {
+                        DOMElements.timerModeContainer.classList.add('hidden');
+                        DOMElements.stopwatchDisplay.classList.remove('hidden');
+                        DOMElements.timerControls.classList.add('hidden');
+                        DOMElements.stopwatchControls.classList.remove('hidden');
+                    }
+                    break;
+                case 'toggle-stopwatch': actions.toggleStopwatch(actionTarget); break;
+                case 'reset-stopwatch': actions.resetStopwatch(); break;
+                case 'toggle-timer': actions.toggleTimer(actionTarget); break;
+                case 'reset-timer': actions.resetTimer(); break;
+                case 'record-measured-time':
+                    const activeMode = document.querySelector('.timer-mode-btn.border-\\[var\\(--ios-blue\\)\\]').dataset.mode;
+                    const totalSeconds = activeMode === 'stopwatch' ? timerState.stopwatch.seconds : timerState.timer.totalSeconds;
+                    const totalMinutes = Math.round(totalSeconds / 60);
+                    const selectedTextbook = DOMElements.timerTextbookSelect.value;
+                    if (!selectedTextbook) {
+                        alert('記録する教材を選択してください。');
+                        return;
+                    }
+                    actions.openRecordForm({ selectedTextbook, totalMinutes });
+                    break;
+            }
+        });
+        
+        DOMElements.textbookForm.addEventListener('submit', actions.saveTextbook);
+        DOMElements.recordForm.addEventListener('submit', actions.saveRecord);
+        DOMElements.textbookImageInput.addEventListener('change', (e) => actions.handleFileSelect(e.target.files[0]));
+        DOMElements.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); DOMElements.dropZone.classList.add('dragover'); });
+        DOMElements.dropZone.addEventListener('dragleave', () => DOMElements.dropZone.classList.remove('dragover'));
+        DOMElements.dropZone.addEventListener('drop', (e) => { e.preventDefault(); DOMElements.dropZone.classList.remove('dragover'); actions.handleFileSelect(e.dataTransfer.files[0]); });
+
+        // --- 初期化 ---
+        render.library();
+        DOMElements.body.classList.add('loaded');
+    });
+})();
+</script>
+</body>
+</html>

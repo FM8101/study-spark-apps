@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>データ分析 | StudySpark</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?display=swap&family=Inter:wght@400;500;600;700&family=SF+Pro+Display:wght@400;500;600;700" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style type="text/tailwindcss">
+        :root {
+            --ios-blue: #0A84FF;
+            --ios-orange: #FF9F0A;
+            --ios-green: #30D158;
+            --ios-red: #FF453A;
+            --background-dark: #000000;
+            --card-background-dark: rgba(28, 28, 30, 0.7);
+            --text-primary-dark: #FFFFFF;
+            --text-secondary-dark: #8E8E93;
+            --glass-blur: 16px;
+            --glass-border-color-dark: rgba(255, 255, 255, 0.15);
+            
+            --background-light: #f8fcfa;
+            --card-background-light: #ffffff;
+            --text-primary-light: #0c1c17;
+            --text-secondary-light: #555;
+            --glass-border-color-light: #e6f4ef;
+        }
+        body {
+            font-family: 'SF Pro Display', 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+            opacity: 0;
+        }
+        body.loaded {
+            opacity: 1;
+        }
+        .theme-dark {
+            background-color: var(--background-dark);
+            color: var(--text-primary-dark);
+        }
+        .theme-light {
+            background-color: var(--background-light);
+            color: var(--text-primary-light);
+        }
+        .aurora-background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0;
+            background:
+                radial-gradient(ellipse at 20% 80%, var(--ios-blue) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 30%, var(--ios-orange) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, var(--ios-green) 0%, transparent 60%);
+            animation: aurora-swirl 30s infinite linear alternate;
+            filter: blur(40px);
+            transition: opacity 0.5s;
+        }
+        .theme-dark .aurora-background { opacity: 0.3; }
+
+        .glass-card {
+            transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+            border-radius: 20px;
+        }
+        .theme-dark .glass-card {
+            background-color: var(--card-background-dark);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border-color-dark);
+        }
+        .theme-light .glass-card {
+            background-color: var(--card-background-light);
+            border: 1px solid var(--glass-border-color-light);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        
+        .tab-button {
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .theme-dark .tab-button.active {
+            color: var(--ios-blue);
+            border-color: var(--ios-blue);
+        }
+        .theme-light .tab-button.active {
+            color: #019863;
+            border-color: #019863;
+        }
+
+        .chart-container {
+            height: 350px;
+            padding: 1rem;
+        }
+        
+        .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 1050; opacity: 0; transition: opacity 0.3s ease; visibility: hidden; }
+        .popup-overlay.visible { opacity: 1; visibility: visible; }
+        .popup-content { padding: 2rem; border-radius: 20px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.3s ease; position: relative; }
+        .popup-overlay.visible .popup-content { transform: scale(1); }
+    </style>
+     <script>
+        const savedTheme = localStorage.getItem('学習記録アプリ_テーマ') || 'dark';
+        document.documentElement.className = `theme-${savedTheme}`;
+    </script>
+</head>
+<body class="opacity-0 transition-opacity duration-300">
+<div class="aurora-background"></div>
+
+<!-- 確認ポップアップ -->
+<div id="confirmPopup" class="popup-overlay">
+    <div class="popup-content glass-card">
+        <h2 id="confirm-title" class="text-xl font-bold mb-4">確認</h2>
+        <p id="confirm-message" class="mb-6"></p>
+        <div class="flex justify-end gap-4">
+            <button data-action="confirm-cancel" class="px-5 py-2 rounded-lg bg-black/20 hover:bg-black/30 font-semibold">キャンセル</button>
+            <button data-action="confirm-ok" class="px-5 py-2 rounded-lg bg-[var(--ios-red)] text-white hover:bg-red-600 font-semibold">実行する</button>
+        </div>
+    </div>
+</div>
+
+<div id="main-content" class="relative flex size-full min-h-screen flex-col bg-transparent group/design-root overflow-x-hidden">
+<header class="sticky top-0 z-50 px-4 sm:px-6 py-3 shadow-sm border-b glass-card !rounded-none">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="size-9 text-[var(--ios-blue)]">
+                <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="logoGradientHeader" x1="0%" x2="100%" y1="0%" y2="100%"><stop offset="0%" style="stop-color:var(--ios-blue);stop-opacity:1"></stop><stop offset="100%" style="stop-color:var(--ios-orange);stop-opacity:1"></stop></linearGradient></defs><path d="M24 4C25.7818 14.2173 33.7827 22.2182 44 24C33.7827 25.7818 25.7818 33.7827 24 44C22.2182 33.7827 14.2173 25.7818 4 24C14.2173 22.2182 22.2182 14.2173 24 4Z" fill="url(#logoGradientHeader)"></path></svg>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-semibold leading-tight tracking-tight">StudySpark</h2>
+        </div>
+        <nav class="hidden md:flex items-center gap-1 p-1 rounded-xl">
+            <a class="px-3 py-2 text-sm font-medium rounded-lg" href="home.html">ホーム</a>
+            <a class="px-3 py-2 text-sm font-medium rounded-lg" href="record.html">記録</a>
+            <a class="px-3 py-2 text-sm font-medium rounded-lg bg-[var(--ios-blue)] text-white" href="#">データ</a>
+            <a class="px-3 py-2 text-sm font-medium rounded-lg" href="others.html">その他</a>
+        </nav>
+        <div class="flex items-center gap-3 sm:gap-4">
+            <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-9 border-2 border-[var(--ios-blue)] shadow-lg" style='background-image: url("https://placehold.co/100x100/000000/FFFFFF?text=U");'></div>
+        </div>
+    </div>
+</header>
+<main class="px-4 sm:px-6 md:px-10 lg:px-16 flex flex-1 justify-center py-8 sm:py-10">
+    <div class="layout-content-container flex flex-col w-full max-w-6xl gap-8 sm:gap-10">
+        <div>
+            <h1 class="tracking-tight text-3xl sm:text-4xl font-bold leading-tight">学習データ分析</h1>
+            <p class="text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)] mt-2">日々の記録を振り返り、学習傾向を把握しましょう。</p>
+        </div>
+
+        <div class="glass-card p-6 sm:p-8">
+            <div class="border-b border-[var(--glass-border-color-dark)] theme-light:border-[var(--glass-border-color-light)]">
+                <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)] hover:text-white/80 theme-light:hover:text-gray-700 hover:border-gray-300/50" data-tab-name="daily">日別</button>
+                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)] hover:text-white/80 theme-light:hover:text-gray-700 hover:border-gray-300/50" data-tab-name="weekly">週別</button>
+                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)] hover:text-white/80 theme-light:hover:text-gray-700 hover:border-gray-300/50" data-tab-name="monthly">月別</button>
+                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)] hover:text-white/80 theme-light:hover:text-gray-700 hover:border-gray-300/50" data-tab-name="overall">総合</button>
+                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)] hover:text-white/80 theme-light:hover:text-gray-700 hover:border-gray-300/50" data-tab-name="history">学習履歴</button>
+                </nav>
+            </div>
+
+            <div class="mt-8">
+                <div id="dailyContent" class="tab-content hidden"><div class="grid grid-cols-1 lg:grid-cols-5 gap-6"><div class="lg:col-span-3"><div class="chart-container"><canvas id="dailyBarChart"></canvas></div></div><div class="lg:col-span-2"><div class="chart-container"><canvas id="dailyPieChart"></canvas></div></div></div></div>
+                <div id="weeklyContent" class="tab-content hidden"><div class="grid grid-cols-1 lg:grid-cols-5 gap-6"><div class="lg:col-span-3"><div class="chart-container"><canvas id="weeklyBarChart"></canvas></div></div><div class="lg:col-span-2"><div class="chart-container"><canvas id="weeklyPieChart"></canvas></div></div></div></div>
+                <div id="monthlyContent" class="tab-content hidden"><div class="grid grid-cols-1 gap-6"><div class=""><div class="chart-container"><canvas id="monthlyTotalBarChart"></canvas></div></div><div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-6"><div class="lg:col-span-3"><div class="chart-container"><canvas id="monthlyBarChart"></canvas></div></div><div class="lg:col-span-2"><div class="chart-container"><canvas id="monthlyPieChart"></canvas></div></div></div></div></div>
+                <div id="overallContent" class="tab-content hidden"><div class="grid grid-cols-1 lg:grid-cols-5 gap-6"><div class="lg:col-span-3"><div class="chart-container"><canvas id="overallBarChart"></canvas></div></div><div class="lg:col-span-2"><div class="chart-container"><canvas id="overallPieChart"></canvas></div></div></div></div>
+                <div id="historyContent" class="tab-content hidden">
+                    <div id="history-list" class="space-y-4"></div>
+                    <p id="history-empty-message" class="hidden text-center text-gray-400 py-8">学習記録がありません。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</div>
+
+<script>
+(() => {
+    document.addEventListener('DOMContentLoaded', () => {
+        const RECORDS_KEY = '学習記録アプリ_日々の記録';
+        const REVIEW_ITEMS_KEY = '学習記録アプリ_復習項目';
+        let records = [];
+        let chartInstances = {};
+        let activeTab = 'daily';
+        const isDarkMode = document.documentElement.classList.contains('theme-dark');
+
+        const subjectColorMap = new Map();
+        const colorPalette = [ '#0A84FF', '#FF9F0A', '#30D158', '#FF453A', '#BF5AF2', '#5E5CE6', '#AC8E68', '#FF375F' ];
+        let colorIndex = 0;
+        
+        const utils = {
+            loadData: (key, def = []) => { try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; } },
+            saveData: (key, data) => localStorage.setItem(key, JSON.stringify(data)),
+            formatTime: (totalMinutes) => {
+                if (!totalMinutes || totalMinutes === 0) return "0分";
+                const h = Math.floor(totalMinutes / 60);
+                const m = totalMinutes % 60;
+                return `${h > 0 ? h + '時間 ' : ''}${m}分`.trim();
+            },
+            showConfirmation: (title, message) => {
+                return new Promise((resolve) => {
+                    const popup = document.getElementById('confirmPopup');
+                    document.getElementById('confirm-title').textContent = title;
+                    document.getElementById('confirm-message').textContent = message;
+                    popup.classList.add('visible');
+
+                    const handleConfirm = (e) => {
+                        const actionTarget = e.target.closest('[data-action]');
+                        if (!actionTarget) return;
+
+                        const action = actionTarget.dataset.action;
+                        if (action === 'confirm-ok' || action === 'confirm-cancel') {
+                            popup.classList.remove('visible');
+                            resolve(action === 'confirm-ok');
+                            popup.removeEventListener('click', handleConfirm);
+                        }
+                    };
+                    popup.addEventListener('click', handleConfirm);
+                });
+            }
+        };
+
+        function getColorForSubject(subject) {
+            if (!subjectColorMap.has(subject)) {
+                subjectColorMap.set(subject, colorPalette[colorIndex % colorPalette.length]);
+                colorIndex++;
+            }
+            return subjectColorMap.get(subject);
+        }
+        
+        function createChart(canvasId, type, data, options) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            if (chartInstances[canvasId]) {
+                chartInstances[canvasId].destroy();
+            }
+            const ctx = canvas.getContext('2d');
+            chartInstances[canvasId] = new Chart(ctx, { type, data, options });
+        }
+        
+        const CHART_DEFAULTS = {
+            bar: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: { bodyFont: { size: 14 }, titleFont: { size: 16 } }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: { display: true, text: '学習時間 (分)', color: isDarkMode ? '#8E8E93' : '#555' },
+                        ticks: { color: isDarkMode ? '#8E8E93' : '#555' },
+                        grid: { color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)' }
+                    },
+                    x: {
+                        ticks: { color: isDarkMode ? '#8E8E93' : '#555' },
+                        grid: { color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)' }
+                    }
+                }
+            },
+            doughnut: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { 
+                    legend: { position: 'right', labels: { color: isDarkMode ? '#FFFFFF' : '#0c1c17', font: { size: 14 } } },
+                    tooltip: { bodyFont: { size: 14 }, titleFont: { size: 16 } }
+                }
+            }
+        };
+        
+        function getFilteredRecords(period) {
+            const now = new Date();
+            if (period === 'daily') {
+                const sevenDaysAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
+                return records.filter(r => new Date(r.date) >= sevenDaysAgo);
+            }
+            if (period === 'weekly') {
+                const fourWeeksAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 27);
+                 return records.filter(r => new Date(r.date) >= fourWeeksAgo);
+            }
+            if (period === 'monthly') {
+                const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+                return records.filter(r => new Date(r.date) >= sixMonthsAgo);
+            }
+            return records; // overall
+        }
+
+        function processChartData(records) {
+            const data = {};
+            records.forEach(r => {
+                data[r.subject] = (data[r.subject] || 0) + r.time;
+            });
+            
+            const sortedSubjects = Object.entries(data).sort((a, b) => b[1] - a[1]);
+            const labels = sortedSubjects.map(item => item[0]);
+            const values = sortedSubjects.map(item => item[1]);
+            const backgroundColors = labels.map(label => getColorForSubject(label));
+
+            return { labels, values, backgroundColors };
+        }
+
+        function processDailyBarData(records) {
+            const labels = [];
+            const data = {};
+            const now = new Date();
+            for(let i = 6; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+                const label = `${d.getMonth()+1}/${d.getDate()}`;
+                labels.push(label);
+                data[label] = 0;
+            }
+            records.forEach(r => {
+                const recordDate = new Date(r.date);
+                const label = `${recordDate.getMonth()+1}/${recordDate.getDate()}`;
+                if(data.hasOwnProperty(label)) {
+                    data[label] += r.time;
+                }
+            });
+            return { labels, values: Object.values(data) };
+        }
+        
+        function processWeeklyBarData(records) {
+            const labels = [];
+            const data = {};
+            const now = new Date();
+            for (let i = 3; i >= 0; i--) {
+                const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() - (i * 7));
+                const label = `${weekStart.getMonth()+1}/${weekStart.getDate()}~`;
+                labels.push(label);
+                data[label] = 0;
+            }
+            records.forEach(r => {
+                const recordDate = new Date(r.date);
+                const weekIndex = Math.floor((now - recordDate) / (1000 * 60 * 60 * 24 * 7));
+                if (weekIndex < 4 && weekIndex >= 0) {
+                     const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay() - (weekIndex * 7));
+                     const label = `${weekStart.getMonth()+1}/${weekStart.getDate()}~`;
+                     if(data.hasOwnProperty(label)) data[label] += r.time;
+                }
+            });
+            return { labels, values: Object.values(data) };
+        }
+
+        function processMonthlyTotalData(records) {
+            const data = {}; 
+            const monthLabels = [];
+            const now = new Date();
+            for (let i = 5; i >= 0; i--) {
+                const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const label = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                monthLabels.push(label);
+                data[label] = 0;
+            }
+            records.forEach(r => {
+                const monthKey = r.date.substring(0, 7);
+                if (data.hasOwnProperty(monthKey)) {
+                    data[monthKey] += r.time;
+                }
+            });
+            const labels = monthLabels.map(label => `${label.split('-')[0]}年${parseInt(label.split('-')[1])}月`);
+            const values = monthLabels.map(label => data[label]);
+            return { labels, values };
+        }
+
+        function renderCharts(period) {
+            const filteredRecords = getFilteredRecords(period);
+            const { labels: subjectLabels, values: subjectValues, backgroundColors } = processChartData(filteredRecords);
+            
+            const barCanvasId = `${period}BarChart`;
+            const pieCanvasId = `${period}PieChart`;
+            
+            const pieOptions = JSON.parse(JSON.stringify(CHART_DEFAULTS.doughnut));
+            pieOptions.plugins.title = { display: true, text: `科目別 割合`, color: isDarkMode ? '#FFFFFF' : '#0c1c17', font: { size: 16 }};
+
+            const pieChartParent = document.getElementById(pieCanvasId)?.parentElement;
+            if(pieChartParent) {
+                pieChartParent.innerHTML = `<canvas id="${pieCanvasId}"></canvas>`;
+                if (subjectLabels.length > 0) {
+                    createChart(pieCanvasId, 'doughnut', { labels: subjectLabels, datasets: [{ data: subjectValues, backgroundColor: backgroundColors }] }, pieOptions);
+                } else {
+                    pieChartParent.innerHTML = `<p class="text-center text-gray-500 flex items-center justify-center h-full">データがありません</p>`;
+                }
+            }
+
+            let barData, barTitle;
+            if (period === 'daily') {
+                const dailyData = processDailyBarData(filteredRecords);
+                barData = { labels: dailyData.labels, datasets: [{ label: '学習時間(分)', data: dailyData.values, backgroundColor: '#0A84FF' }] };
+                barTitle = '日別 総学習時間';
+            } else if (period === 'weekly') {
+                const weeklyData = processWeeklyBarData(filteredRecords);
+                barData = { labels: weeklyData.labels, datasets: [{ label: '学習時間(分)', data: weeklyData.values, backgroundColor: '#30D158' }] };
+                barTitle = '週別 総学習時間';
+            } else if (period === 'monthly') {
+                const monthlySubjectData = processChartData(filteredRecords);
+                barData = { labels: monthlySubjectData.labels, datasets: [{ label: '学習時間(分)', data: monthlySubjectData.values, backgroundColor: monthlySubjectData.backgroundColors }] };
+                barTitle = '科目別 総学習時間';
+                
+                const totalData = processMonthlyTotalData(filteredRecords);
+                const totalBarCanvasId = 'monthlyTotalBarChart';
+                const totalBarChartParent = document.getElementById(totalBarCanvasId)?.parentElement;
+                if(totalBarChartParent) {
+                    totalBarChartParent.innerHTML = `<canvas id="${totalBarCanvasId}"></canvas>`;
+                    if (totalData.values.some(v => v > 0)) {
+                        const totalBarOptions = JSON.parse(JSON.stringify(CHART_DEFAULTS.bar));
+                        totalBarOptions.plugins.title = { display: true, text: '月別 総学習時間', color: isDarkMode ? '#FFFFFF' : '#0c1c17', font: { size: 16 } };
+                        createChart(totalBarCanvasId, 'bar', { labels: totalData.labels, datasets: [{ label: '総学習時間(分)', data: totalData.values, backgroundColor: '#FF9F0A' }] }, totalBarOptions);
+                    } else {
+                        totalBarChartParent.innerHTML = `<p class="text-center text-gray-500 flex items-center justify-center h-full">データがありません</p>`;
+                    }
+                }
+            } else { // overall
+                barData = { labels: subjectLabels, datasets: [{ label: '学習時間(分)', data: subjectValues, backgroundColor: backgroundColors }] };
+                barTitle = '科目別 総学習時間';
+            }
+
+            const barChartParent = document.getElementById(barCanvasId)?.parentElement;
+            if(barChartParent) {
+                barChartParent.innerHTML = `<canvas id="${barCanvasId}"></canvas>`;
+                if (barData.labels.length > 0) {
+                    const barOptions = JSON.parse(JSON.stringify(CHART_DEFAULTS.bar));
+                    barOptions.plugins.title = { display: true, text: barTitle, color: isDarkMode ? '#FFFFFF' : '#0c1c17', font: { size: 16 } };
+                    createChart(barCanvasId, 'bar', barData, barOptions);
+                } else {
+                     barChartParent.innerHTML = `<p class="text-center text-gray-500 flex items-center justify-center h-full">データがありません</p>`;
+                }
+            }
+        }
+
+        function renderHistoryList() {
+            const historyList = document.getElementById('history-list');
+            const emptyMessage = document.getElementById('history-empty-message');
+            historyList.innerHTML = '';
+            
+            const sortedRecords = [...records].sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+
+            if (sortedRecords.length === 0) {
+                emptyMessage.classList.remove('hidden');
+                return;
+            }
+            emptyMessage.classList.add('hidden');
+
+            sortedRecords.forEach(record => {
+                const card = document.createElement('div');
+                card.className = 'p-4 rounded-lg flex items-center justify-between bg-white/5';
+                card.innerHTML = `
+                    <div class="flex-1">
+                        <p class="text-xs text-gray-400">${record.date}</p>
+                        <p class="font-semibold">${record.textbook}</p>
+                        <p class="text-sm text-gray-300">${record.subject} - ${utils.formatTime(record.time)}</p>
+                        ${record.scope ? `<p class="text-xs text-gray-400 mt-1">範囲: ${record.scope}</p>` : ''}
+                    </div>
+                    <button data-action="delete-record" data-record-id="${record.id}" class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-500/10">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                `;
+                historyList.appendChild(card);
+            });
+        }
+        
+        function showTab(tabName) {
+            activeTab = tabName;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`${tabName}Content`).classList.remove('hidden');
+            
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tabName === tabName);
+            });
+
+            if (tabName === 'history') {
+                renderHistoryList();
+            } else {
+                renderCharts(tabName);
+            }
+        }
+
+        async function deleteRecord(recordId) {
+            const confirmed = await utils.showConfirmation('記録の削除', 'この学習記録を削除しますか？この操作は元に戻せません。');
+            if (!confirmed) return;
+
+            records = records.filter(r => r.id !== recordId);
+            utils.saveData(RECORDS_KEY, records);
+
+            let reviewItems = utils.loadData(REVIEW_ITEMS_KEY);
+            const reviewId = `review-${recordId}`;
+            reviewItems = reviewItems.filter(item => item.id !== reviewId);
+            utils.saveData(REVIEW_ITEMS_KEY, reviewItems);
+
+            showTab(activeTab);
+        }
+
+        function init() {
+            records = utils.loadData(RECORDS_KEY);
+            
+            document.body.addEventListener('click', (e) => {
+                const target = e.target.closest('[data-action]');
+                if (!target) return;
+
+                const action = target.dataset.action;
+                if (action === 'delete-record') {
+                    deleteRecord(target.dataset.recordId);
+                }
+            });
+
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const tabName = e.currentTarget.dataset.tabName;
+                    showTab(tabName);
+                });
+            });
+            showTab('daily');
+            document.body.classList.add('loaded');
+        }
+
+        init();
+    });
+})();
+</script>
+</body>
+</html>

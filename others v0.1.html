@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>設定 | StudySpark</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?display=swap&family=Inter:wght@400;500;600;700&family=SF+Pro+Display:wght@400;500;600;700" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style type="text/tailwindcss">
+        :root {
+            --ios-blue: #0A84FF;
+            --ios-orange: #FF9F0A;
+            --ios-green: #30D158;
+            --background-dark: #000000;
+            --card-background-dark: rgba(28, 28, 30, 0.7);
+            --text-primary-dark: #FFFFFF;
+            --text-secondary-dark: #8E8E93;
+            --glass-blur: 16px;
+            --glass-border-color-dark: rgba(255, 255, 255, 0.15);
+            
+            --background-light: #f8fcfa;
+            --card-background-light: #ffffff;
+            --text-primary-light: #0c1c17;
+            --text-secondary-light: #555;
+            --glass-border-color-light: #e6f4ef;
+        }
+        body {
+            font-family: 'SF Pro Display', 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .theme-dark {
+            background-color: var(--background-dark);
+            color: var(--text-primary-dark);
+        }
+        .theme-light {
+            background-color: var(--background-light);
+            color: var(--text-primary-light);
+        }
+        .aurora-background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0;
+            background:
+                radial-gradient(ellipse at 20% 80%, var(--ios-blue) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 30%, var(--ios-orange) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, var(--ios-green) 0%, transparent 60%);
+            animation: aurora-swirl 30s infinite linear alternate;
+            filter: blur(40px);
+            transition: opacity 0.5s;
+        }
+        .theme-dark .aurora-background { opacity: 0.3; }
+
+        .glass-card {
+            transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+            border-radius: 20px;
+        }
+        .theme-dark .glass-card {
+            background-color: var(--card-background-dark);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--glass-border-color-dark);
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
+        }
+        .theme-light .glass-card {
+            background-color: var(--card-background-light);
+            border: 1px solid var(--glass-border-color-light);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        
+        .nav-link {
+             padding: 8px 12px;
+            transition: color 0.3s ease, background-color 0.3s ease;
+            border-radius: 10px; font-weight: 500;
+        }
+        .theme-dark .nav-link { color: var(--text-secondary-dark); }
+        .theme-light .nav-link { color: #555; }
+        .theme-dark .nav-link:hover { color: var(--text-primary-dark); background-color: rgba(255, 255, 255, 0.1); }
+        .theme-light .nav-link:hover { color: #000; background-color: #f3f4f6; }
+
+        .nav-link-active { font-weight: 600; }
+        .theme-dark .nav-link-active { color: var(--text-primary); background-color: var(--ios-blue); }
+        .theme-light .nav-link-active { color: white; background-color: #019863; }
+        
+        .form-input {
+            margin-top: 0.25rem; display: block; width: 100%;
+            border-radius: 0.5rem; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+            padding: 0.75rem 1rem;
+        }
+        .theme-dark .form-input {
+             background-color: rgba(120, 120, 128, 0.18);
+             border: 1px solid var(--glass-border-color-dark);
+             color: var(--text-primary);
+        }
+         .theme-light .form-input {
+             background-color: #fff;
+             border: 1px solid #d1d5db;
+             color: var(--text-primary-light);
+        }
+        
+        .form-label { display: block; font-size: 0.875rem; font-weight: 500; }
+        .theme-dark .form-label { color: var(--text-secondary-dark); }
+        .theme-light .form-label { color: var(--text-secondary-light); }
+        
+        .hidden { display: none; }
+        
+        .ios-button {
+             padding: 12px 24px; border-radius: 12px; font-weight: 600;
+             transition: background-color 0.3s ease, transform 0.2s ease;
+             text-align: center;
+             cursor: pointer;
+        }
+        .theme-dark .ios-button { background-color: var(--ios-blue); color: white; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2); }
+        .theme-light .ios-button { background-color: #019863; color: white; }
+        .theme-dark .ios-button:hover { background-color: #0069CC; transform: scale(1.03); }
+        .theme-light .ios-button:hover { background-color: #017a50; transform: scale(1.03); }
+
+        /* ★★★ AIトーンのカスタムラジオボタン風スタイル ★★★ */
+        .segmented-control {
+            display: flex;
+            padding: 2px;
+            border-radius: 10px;
+            width: 100%;
+        }
+        .theme-dark .segmented-control { background-color: rgba(120, 120, 128, 0.18); }
+        .theme-light .segmented-control { background-color: #e5e7eb; }
+        
+        .segmented-control label {
+            flex: 1;
+            text-align: center;
+        }
+
+        .segmented-control input[type="radio"] {
+            display: none;
+        }
+
+        .segmented-control .segment {
+            padding: 6px 10px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+            display: block;
+        }
+        .theme-dark .segmented-control .segment { color: var(--text-secondary-dark); }
+        .theme-light .segmented-control .segment { color: var(--text-secondary-light); }
+
+        .segmented-control input[type="radio"]:checked + .segment {
+            font-weight: 600;
+        }
+        .theme-dark .segmented-control input[type="radio"]:checked + .segment {
+            background-color: #6c757d;
+            color: var(--text-primary-dark);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .theme-light .segmented-control input[type="radio"]:checked + .segment {
+            background-color: #fff;
+            color: var(--text-primary-light);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+    </style>
+     <script>
+        const savedTheme = localStorage.getItem('学習記録アプリ_テーマ') || 'dark';
+        document.documentElement.className = `theme-${savedTheme}`;
+    </script>
+</head>
+<body class="">
+<div class="aurora-background"></div>
+<div class="relative flex size-full min-h-screen flex-col bg-transparent group/design-root overflow-x-hidden">
+<div class="layout-container flex h-full grow flex-col">
+<header class="sticky top-0 z-50 px-4 sm:px-6 py-3 shadow-sm border-b glass-card !rounded-none">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="size-9 text-[var(--ios-blue)]">
+                <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="logoGradientHeader" x1="0%" x2="100%" y1="0%" y2="100%"><stop offset="0%" style="stop-color:var(--ios-blue);stop-opacity:1"></stop><stop offset="100%" style="stop-color:var(--ios-orange);stop-opacity:1"></stop></linearGradient></defs><path d="M24 4C25.7818 14.2173 33.7827 22.2182 44 24C33.7827 25.7818 25.7818 33.7827 24 44C22.2182 33.7827 14.2173 25.7818 4 24C14.2173 22.2182 22.2182 14.2173 24 4Z" fill="url(#logoGradientHeader)"></path></svg>
+            </div>
+            <h2 class="text-xl sm:text-2xl font-semibold leading-tight tracking-tight">StudySpark</h2>
+        </div>
+        <nav class="hidden md:flex items-center gap-1 p-1 bg-black/10 theme-light:bg-gray-100 rounded-xl">
+            <a class="nav-link text-sm" href="home.html">ホーム</a>
+            <a class="nav-link text-sm" href="record.html">記録</a>
+            <a class="nav-link text-sm" href="data.html">データ</a>
+            <a class="nav-link text-sm nav-link-active" href="others.html">その他</a>
+        </nav>
+        <div class="flex items-center gap-3 sm:gap-4">
+            <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-9 border-2 border-[var(--ios-blue)] shadow-lg" style='background-image: url("https://placehold.co/100x100/000000/FFFFFF?text=U");'></div>
+        </div>
+    </div>
+</header>
+<main class="px-4 sm:px-6 md:px-10 lg:px-16 flex flex-1 justify-center py-8 sm:py-10">
+<div class="layout-content-container flex flex-col w-full max-w-3xl gap-8 sm:gap-10">
+    <h1 class="text-2xl sm:text-3xl font-bold tracking-tight">設定</h1>
+
+    <div class="glass-card p-6 sm:p-8 space-y-8">
+        <!-- 表示設定 -->
+        <section>
+            <h2 class="text-xl font-semibold tracking-tight pb-4 border-b border-[var(--glass-border-color-dark)] theme-light:border-[var(--glass-border-color-light)] mb-6">表示設定</h2>
+            <div class="space-y-6">
+                <div>
+                    <label class="form-label">テーマ</label>
+                    <div class="flex gap-4 mt-2" id="theme-selector">
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="theme" value="dark" class="h-4 w-4 text-blue-500 bg-gray-700 border-gray-600 focus:ring-blue-400"><span>ダーク</span></label>
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="theme" value="light" class="h-4 w-4 text-blue-500 bg-gray-200 border-gray-400 focus:ring-blue-400"><span>ライト</span></label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI設定 -->
+        <section>
+            <h2 class="text-xl font-semibold tracking-tight pb-4 border-b border-[var(--glass-border-color-dark)] theme-light:border-[var(--glass-border-color-light)] mb-6">AI設定</h2>
+            <div class="space-y-6">
+                <div>
+                    <label for="geminiApiKey" class="form-label">Gemini APIキー</label>
+                    <input type="password" id="geminiApiKey" class="form-input" placeholder="APIキーを入力">
+                </div>
+                <div>
+                    <label class="form-label">AIの会話トーン</label>
+                    <!-- ★★★ 修正点: セグメントコントロールに変更 ★★★ -->
+                    <div id="aiTone" class="segmented-control mt-2">
+                        <label><input type="radio" name="aiToneRadio" value="friendly"><span class="segment">親しみやすい</span></label>
+                        <label><input type="radio" name="aiToneRadio" value="polite"><span class="segment">丁寧</span></label>
+                        <label><input type="radio" name="aiToneRadio" value="concise"><span class="segment">簡潔</span></label>
+                        <label><input type="radio" name="aiToneRadio" value="encouraging"><span class="segment">励ます</span></label>
+                        <label><input type="radio" name="aiToneRadio" value="custom"><span class="segment">カスタム</span></label>
+                    </div>
+                </div>
+                <div id="customToneContainer" class="hidden">
+                    <label for="customAiTone" class="form-label">カスタムトーンの詳細</label>
+                    <textarea id="customAiTone" rows="3" class="form-input" placeholder="例: 関西弁で、友達のように話しかけてください。"></textarea>
+                </div>
+            </div>
+        </section>
+        
+         <!-- データ管理 -->
+        <section>
+            <h2 class="text-xl font-semibold tracking-tight pb-4 border-b border-[var(--glass-border-color-dark)] theme-light:border-[var(--glass-border-color-light)] mb-6">データ管理</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button id="exportDataButton" class="ios-button w-full !bg-gray-500 hover:!bg-gray-600">エクスポート</button>
+                <div class="relative">
+                    <input type="file" id="importDataFile" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    <button class="ios-button w-full !bg-gray-500 hover:!bg-gray-600 pointer-events-none">インポート</button>
+                </div>
+                <button id="resetDataButton" class="ios-button w-full !bg-red-600 hover:!bg-red-700 col-span-1 sm:col-span-2">全データをリセット</button>
+            </div>
+        </section>
+    </div>
+    
+    <div class="mt-8 flex justify-end">
+        <button id="saveAllSettingsButton" class="ios-button">設定を保存</button>
+    </div>
+
+</div>
+</main>
+</div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const geminiApiKeyInput = document.getElementById('geminiApiKey');
+        const aiToneContainer = document.getElementById('aiTone'); // ★★★ 修正 ★★★
+        const aiToneRadios = document.querySelectorAll('input[name="aiToneRadio"]'); // ★★★ 修正 ★★★
+        const customToneContainer = document.getElementById('customToneContainer');
+        const customAiToneTextarea = document.getElementById('customAiTone');
+        const themeSelector = document.getElementById('theme-selector');
+        const saveAllSettingsButton = document.getElementById('saveAllSettingsButton');
+        const exportButton = document.getElementById('exportDataButton');
+        const importFileInput = document.getElementById('importDataFile');
+        const resetButton = document.getElementById('resetDataButton');
+
+        const API_KEY_KEY = '学習記録アプリ_GeminiAPIキー';
+        const AI_TONE_KEY = '学習記録アプリ_AIトーン';
+        const CUSTOM_AI_TONE_KEY = '学習記録アプリ_カスタムAIトーン';
+        const THEME_KEY = '学習記録アプリ_テーマ';
+        
+        function applyTheme(theme) {
+            document.documentElement.className = `theme-${theme}`;
+        }
+
+        function loadSettings() {
+            geminiApiKeyInput.value = localStorage.getItem(API_KEY_KEY) || '';
+            
+            const savedTone = localStorage.getItem(AI_TONE_KEY) || 'friendly';
+            const targetRadio = document.querySelector(`input[name="aiToneRadio"][value="${savedTone}"]`);
+            if(targetRadio) targetRadio.checked = true;
+
+            if (savedTone === 'custom') {
+                customToneContainer.classList.remove('hidden');
+                customAiToneTextarea.value = localStorage.getItem(CUSTOM_AI_TONE_KEY) || '';
+            }
+
+            const savedTheme = localStorage.getItem(THEME_KEY) || 'dark';
+            const themeRadio = themeSelector.querySelector(`input[value="${savedTheme}"]`);
+            if (themeRadio) themeRadio.checked = true;
+        }
+
+        function saveSettings() {
+            localStorage.setItem(API_KEY_KEY, geminiApiKeyInput.value.trim());
+            
+            const selectedTone = document.querySelector('input[name="aiToneRadio"]:checked')?.value || 'friendly';
+            localStorage.setItem(AI_TONE_KEY, selectedTone);
+
+            if (selectedTone === 'custom') {
+                localStorage.setItem(CUSTOM_AI_TONE_KEY, customAiToneTextarea.value.trim());
+            } else {
+                localStorage.removeItem(CUSTOM_AI_TONE_KEY);
+            }
+
+            const selectedThemeRadio = themeSelector.querySelector('input:checked');
+            if(selectedThemeRadio){
+                 const selectedTheme = selectedThemeRadio.value;
+                localStorage.setItem(THEME_KEY, selectedTheme);
+                applyTheme(selectedTheme);
+            }
+            
+            alert('設定を保存しました。');
+        }
+        
+        aiToneRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                 if (radio.value === 'custom' && radio.checked) {
+                    customToneContainer.classList.remove('hidden');
+                } else {
+                    customToneContainer.classList.add('hidden');
+                }
+            });
+        });
+
+        saveAllSettingsButton.addEventListener('click', saveSettings);
+        
+        exportButton.addEventListener('click', () => {
+             const dataToExport = {};
+             for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('学習記録アプリ_')) {
+                    dataToExport[key] = localStorage.getItem(key);
+                }
+             }
+             const jsonData = JSON.stringify(dataToExport, null, 2);
+             const blob = new Blob([jsonData], { type: 'application/json' });
+             const url = URL.createObjectURL(blob);
+             const a = document.createElement('a');
+             a.href = url;
+             a.download = `studyspark_backup_${new Date().toISOString().slice(0,10)}.json`;
+             a.click();
+             URL.revokeObjectURL(url);
+        });
+
+        importFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                if (confirm('現在のデータを上書きしてインポートしますか？この操作は元に戻せません。')) {
+                    try {
+                        const importedData = JSON.parse(event.target.result);
+                         for (const key in importedData) {
+                            if (key.startsWith('学習記録アプリ_')) {
+                                localStorage.setItem(key, importedData[key]);
+                            }
+                         }
+                        alert('データをインポートしました。ページを再読み込みします。');
+                        window.location.reload();
+                    } catch (err) {
+                        alert('ファイルの読み込みに失敗しました。形式が正しくない可能性があります。');
+                        console.error(err);
+                    }
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        resetButton.addEventListener('click', () => {
+            if (confirm('本当に全てのデータをリセットしますか？学習記録、復習項目、設定がすべて削除されます。')) {
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.startsWith('学習記録アプリ_')) {
+                        keysToRemove.push(key);
+                    }
+                }
+                keysToRemove.forEach(key => localStorage.removeItem(key));
+                alert('全てのデータをリセットしました。ページを再読み込みします。');
+                window.location.reload();
+            }
+        });
+
+        loadSettings();
+    });
+</script>
+</body>
+</html>
