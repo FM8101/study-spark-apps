@@ -80,8 +80,8 @@
             border-color: var(--ios-blue);
         }
         .theme-light .tab-button.active {
-            color: #019863;
-            border-color: #019863;
+            color: var(--ios-blue);
+            border-color: var(--ios-blue);
         }
 
         .chart-container {
@@ -93,6 +93,24 @@
         .popup-overlay.visible { opacity: 1; visibility: visible; }
         .popup-content { padding: 2rem; border-radius: 20px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.3s ease; position: relative; }
         .popup-overlay.visible .popup-content { transform: scale(1); }
+        
+        .nav-link {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: color 0.2s, background-color 0.2s;
+        }
+        .theme-dark .nav-link { color: var(--text-secondary-dark); }
+        .theme-light .nav-link { color: var(--text-secondary-light); }
+        .theme-dark .nav-link:hover { background-color: rgba(255, 255, 255, 0.1); color: var(--text-primary-dark); }
+        .theme-light .nav-link:hover { background-color: #e5e7eb; }
+
+        .nav-link.active {
+            font-weight: 600;
+        }
+        .theme-dark .nav-link.active { background-color: var(--ios-blue); color: white; }
+        .theme-light .nav-link.active { background-color: var(--ios-blue); color: white; }
     </style>
      <script>
         const savedTheme = localStorage.getItem('学習記録アプリ_テーマ') || 'dark';
@@ -123,11 +141,11 @@
             </div>
             <h2 class="text-xl sm:text-2xl font-semibold leading-tight tracking-tight">StudySpark</h2>
         </div>
-        <nav class="hidden md:flex items-center gap-1 p-1 rounded-xl">
-            <a class="px-3 py-2 text-sm font-medium rounded-lg" href="home.html">ホーム</a>
-            <a class="px-3 py-2 text-sm font-medium rounded-lg" href="record.html">記録</a>
-            <a class="px-3 py-2 text-sm font-medium rounded-lg bg-[var(--ios-blue)] text-white" href="#">データ</a>
-            <a class="px-3 py-2 text-sm font-medium rounded-lg" href="others.html">その他</a>
+        <nav class="hidden md:flex items-center gap-1 p-1 rounded-xl bg-black/10 theme-light:bg-gray-200">
+            <a href="./index.html" class="nav-link">ホーム</a>
+            <a href="./record.html" class="nav-link">記録</a>
+            <a href="./data.html" class="nav-link active">データ</a>
+            <a href="./others.html" class="nav-link">その他</a>
         </nav>
         <div class="flex items-center gap-3 sm:gap-4">
             <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-9 border-2 border-[var(--ios-blue)] shadow-lg" style='background-image: url("https://placehold.co/100x100/000000/FFFFFF?text=U");'></div>
