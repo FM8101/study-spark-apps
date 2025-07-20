@@ -139,6 +139,24 @@
         .survey-checkbox-item .custom-checkbox { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--text-secondary-dark); transition: all 0.2s; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .survey-checkbox-item input[type="checkbox"]:checked + .custom-checkbox { background-color: var(--ios-blue); border-color: var(--ios-blue); }
         .survey-checkbox-item input[type="checkbox"]:checked + .custom-checkbox::after { content: '✔'; color: white; font-size: 12px; }
+        
+        .nav-link {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: color 0.2s, background-color 0.2s;
+        }
+        .theme-dark .nav-link { color: var(--text-secondary-dark); }
+        .theme-light .nav-link { color: var(--text-secondary-light); }
+        .theme-dark .nav-link:hover { background-color: rgba(255, 255, 255, 0.1); color: var(--text-primary-dark); }
+        .theme-light .nav-link:hover { background-color: #e5e7eb; }
+
+        .nav-link.active {
+            font-weight: 600;
+        }
+        .theme-dark .nav-link.active { background-color: var(--ios-blue); color: white; }
+        .theme-light .nav-link.active { background-color: var(--ios-blue); color: white; }
 
     </style>
     <script>
@@ -224,6 +242,14 @@
             </div>
             <h2 class="text-xl sm:text-2xl font-semibold leading-tight tracking-tight">StudySpark</h2>
         </div>
+        
+        <nav class="hidden md:flex items-center gap-1 p-1 rounded-xl bg-black/10 theme-light:bg-gray-200">
+            <a href="index.html" class="nav-link active">ホーム</a>
+            <a href="record.html" class="nav-link">記録</a>
+            <a href="data.html" class="nav-link">データ</a>
+            <a href="others.html" class="nav-link">その他</a>
+        </nav>
+
         <div class="flex items-center gap-3 sm:gap-4">
              <button data-action="show-notifications" class="ios-icon-button relative" aria-label="通知">
                 <i class="fas fa-envelope"></i>
@@ -692,16 +718,12 @@
                 const basisKey = CONSTANTS.AI_PLAN_BASIS_KEY_PREFIX + currentWeekNumber;
                 const basis = utils.loadData(basisKey, null);
                 
-                // --- FIX STARTS HERE ---
-                // Load survey data, ensuring it's an object with default empty arrays for selections.
-                // This prevents errors if the user has old data or no data stored.
                 const loadedSurveyData = utils.loadData(CONSTANTS.AI_SURVEY_KEY_PREFIX + currentWeekNumber, {});
                 const surveyData = {
                     focusSubjects: [],
                     focusTextbooks: [],
                     ...loadedSurveyData
                 };
-                // --- FIX ENDS HERE ---
 
                 const subjectsContainer = document.getElementById('survey-subjects-container');
                 const textbooksContainer = document.getElementById('survey-textbooks-container');
