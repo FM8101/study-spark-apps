@@ -102,6 +102,7 @@
         .theme-light .popup-form-input, .theme-light .popup-form-select { background-color: #fff; border: 1px solid #d1d5db; color: var(--text-primary-light); }
         
         .sortable-ghost { opacity: 0.4; background: var(--ios-blue); }
+        .section-hidden-in-edit { opacity: 0.4; border: 2px dashed var(--ios-orange); }
 
         .weekly-schedule-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
         .day-column { border-radius: 1rem; padding: 1rem; min-height: 200px; display: flex; flex-direction: column; }
@@ -168,21 +169,6 @@
 <div class="aurora-background"></div>
 
 <!-- Popups -->
-<div id="aiConsentPopup" class="popup-overlay">
-    <div class="popup-content glass-card">
-        <h2 class="text-xl font-bold mb-4">AI機能の利用について</h2>
-        <div class="text-sm space-y-3 mb-6">
-            <p>AIによる分析と計画作成の機能を利用するために、あなたの学習データを匿名化した上で、外部のAIサーバー（Google）に送信する必要があります。</p>
-            <p>送信されるデータには、志望校名などの個人を特定できる情報は含まれません。詳しくは<a href="./others.html" class="text-[var(--ios-blue)] underline">プライバシーポリシー</a>をご確認ください。</p>
-            <p>このデータ送信に同意しますか？</p>
-        </div>
-        <div class="flex justify-end gap-4">
-            <button data-action="ai-consent-decline" class="px-5 py-2 rounded-lg bg-black/20 hover:bg-black/30 font-semibold">同意しない</button>
-            <button data-action="ai-consent-agree" class="px-5 py-2 rounded-lg bg-[var(--ios-blue)] text-white hover:bg-blue-600 font-semibold">同意する</button>
-        </div>
-    </div>
-</div>
-
 <div id="initialSurveyPopup" class="popup-overlay">
     <div class="popup-content glass-card">
         <h2 class="text-2xl font-bold mb-2">ようこそ StudySparkへ！</h2>
@@ -351,7 +337,10 @@
             <section data-section-id="strategy-summary">
                 <div class="flex justify-between items-center px-1 pb-4 sm:pb-5">
                     <h2 class="text-xl sm:text-2xl font-semibold leading-tight tracking-tight">合格戦略サマリー</h2>
-                    <div class="drag-handle hidden cursor-move text-gray-500"><i class="fas fa-grip-vertical"></i></div>
+                    <div class="edit-controls-container hidden items-center gap-2">
+                        <button data-action="toggle-section-visibility" class="ios-icon-button !w-8 !h-8" title="表示切り替え"><i class="fas fa-eye"></i></button>
+                        <div class="drag-handle cursor-move text-gray-500"><i class="fas fa-grip-vertical"></i></div>
+                    </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
                     <div class="flex flex-col gap-3 p-6 sm:p-7 glass-card">
@@ -372,7 +361,10 @@
             <section data-section-id="overview">
                 <div class="flex justify-between items-center px-1 pb-4 sm:pb-5">
                     <h2 class="text-xl sm:text-2xl font-semibold leading-tight tracking-tight">学習状況の概要</h2>
-                    <div class="drag-handle hidden cursor-move text-gray-500"><i class="fas fa-grip-vertical"></i></div>
+                    <div class="edit-controls-container hidden items-center gap-2">
+                        <button data-action="toggle-section-visibility" class="ios-icon-button !w-8 !h-8" title="表示切り替え"><i class="fas fa-eye"></i></button>
+                        <div class="drag-handle cursor-move text-gray-500"><i class="fas fa-grip-vertical"></i></div>
+                    </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
                     <div class="flex flex-col gap-3 p-6 sm:p-7 glass-card hover-lift">
@@ -411,7 +403,10 @@
                              <span id="week-range-display" class="text-sm font-medium text-gray-400 w-32 text-center"></span>
                              <button data-action="next-week" class="ios-icon-button !w-8 !h-8" aria-label="次の週へ"><i class="fas fa-chevron-right"></i></button>
                          </div>
-                         <div class="drag-handle hidden cursor-move text-gray-500 ml-4"><i class="fas fa-grip-vertical"></i></div>
+                         <div class="edit-controls-container hidden items-center gap-2 ml-4">
+                            <button data-action="toggle-section-visibility" class="ios-icon-button !w-8 !h-8" title="表示切り替え"><i class="fas fa-eye"></i></button>
+                            <div class="drag-handle cursor-move text-gray-500"><i class="fas fa-grip-vertical"></i></div>
+                        </div>
                     </div>
                 </div>
                 <div id="weekly-schedule-container" class="glass-card p-4 sm:p-6">
@@ -422,7 +417,10 @@
             <section data-section-id="review">
                 <div class="flex justify-between items-center px-1 pb-4 sm:pb-5">
                     <h2 class="text-xl sm:text-2xl font-semibold leading-tight tracking-tight">今日の復習</h2>
-                    <div class="drag-handle hidden cursor-move text-gray-500"><i class="fas fa-grip-vertical"></i></div>
+                    <div class="edit-controls-container hidden items-center gap-2">
+                        <button data-action="toggle-section-visibility" class="ios-icon-button !w-8 !h-8" title="表示切り替え"><i class="fas fa-eye"></i></button>
+                        <div class="drag-handle cursor-move text-gray-500"><i class="fas fa-grip-vertical"></i></div>
+                    </div>
                 </div>
                 <div id="review-list" class="space-y-6"></div>
                 <p id="no-review-message" class="hidden glass-card text-center text-gray-400 p-6 rounded-xl">今日の復習項目はありません。</p>
@@ -431,7 +429,10 @@
             <section data-section-id="ai-analysis">
                  <div class="flex justify-between items-center px-1 pb-4 sm:pb-5">
                     <h2 class="text-xl sm:text-2xl font-semibold leading-tight tracking-tight">AIによる分析</h2>
-                    <div class="drag-handle hidden cursor-move text-gray-500"><i class="fas fa-grip-vertical"></i></div>
+                    <div class="edit-controls-container hidden items-center gap-2">
+                        <button data-action="toggle-section-visibility" class="ios-icon-button !w-8 !h-8" title="表示切り替え"><i class="fas fa-eye"></i></button>
+                        <div class="drag-handle cursor-move text-gray-500"><i class="fas fa-grip-vertical"></i></div>
+                    </div>
                 </div>
                 <div class="p-6 sm:p-8 glass-card hover-lift">
                     <div class="flex justify-between items-center mb-4">
@@ -455,7 +456,10 @@
             <section data-section-id="recent-records">
                 <div class="flex justify-between items-center px-1 pb-4 sm:pb-5">
                     <h2 class="text-xl sm:text-2xl font-semibold leading-tight tracking-tight">最近の学習記録から予定を作成</h2>
-                    <div class="drag-handle hidden cursor-move text-gray-500"><i class="fas fa-grip-vertical"></i></div>
+                    <div class="edit-controls-container hidden items-center gap-2">
+                        <button data-action="toggle-section-visibility" class="ios-icon-button !w-8 !h-8" title="表示切り替え"><i class="fas fa-eye"></i></button>
+                        <div class="drag-handle cursor-move text-gray-500"><i class="fas fa-grip-vertical"></i></div>
+                    </div>
                 </div>
                 <div id="recent-records-list" class="space-y-4"></div>
             </section>
@@ -519,6 +523,7 @@
             NEW_MOCK_EXAM_KEY: '学習記録アプリ_新規模試結果',
             AI_DATA_CONSENT_KEY: '学習記録アプリ_AIデータ送信同意',
             LAYOUT_ORDER_KEY: '学習記録アプリ_レイアウト順序',
+            SECTION_VISIBILITY_KEY: '学習記録アプリ_セクション表示設定',
             RECORDS_KEY: '学習記録アプリ_日々の記録',
             REVIEW_ITEMS_KEY: '学習記録アプリ_復習項目',
             USER_TASKS_KEY: '学習記録アプリ_ユーザー予定',
@@ -530,6 +535,7 @@
             LIBRARY_KEY: '学習記録アプリ_ライブラリ',
             AI_PLAN_BASIS_KEY_PREFIX: '学習記録アプリ_AI計画根拠_',
             AI_SURVEY_KEY_PREFIX: '学習記録アプリ_AIアンケート_',
+            EXAM_MODE_KEY: '学習記録アプリ_受験対策モード',
         };
         const subjectColorMap = new Map();
         let colorIndex = 0;
@@ -908,13 +914,34 @@
             },
             applyCustomLayout: () => {
                 const savedOrder = utils.loadData(CONSTANTS.LAYOUT_ORDER_KEY);
-                if (DOMElements.sortableSectionsContainer && savedOrder.length > 0) {
-                    savedOrder.forEach(sectionId => {
-                        const section = document.querySelector(`section[data-section-id="${sectionId}"]`);
-                        if (section) {
-                            DOMElements.sortableSectionsContainer.appendChild(section);
+                const visibilitySettings = utils.loadData(CONSTANTS.SECTION_VISIBILITY_KEY, {});
+                const isExamMode = utils.loadData(CONSTANTS.EXAM_MODE_KEY, true);
+
+                if (DOMElements.sortableSectionsContainer) {
+                    const allSections = Array.from(DOMElements.sortableSectionsContainer.querySelectorAll('section'));
+                    
+                    // Apply visibility
+                    allSections.forEach(section => {
+                        const sectionId = section.dataset.sectionId;
+                        let isVisible = visibilitySettings[sectionId] !== false; // Default to true if not set
+                        
+                        // Handle exam mode specific section
+                        if (sectionId === 'strategy-summary' && !isExamMode) {
+                            isVisible = false;
                         }
+                        
+                        section.classList.toggle('hidden', !isVisible);
                     });
+
+                    // Apply order
+                    if (savedOrder.length > 0) {
+                         savedOrder.forEach(sectionId => {
+                            const section = DOMElements.sortableSectionsContainer.querySelector(`section[data-section-id="${sectionId}"]`);
+                            if (section) {
+                                DOMElements.sortableSectionsContainer.appendChild(section);
+                            }
+                        });
+                    }
                 }
             },
             enterLayoutEditMode: () => {
@@ -925,7 +952,18 @@
                     controls.classList.remove('hidden');
                     controls.classList.add('flex');
                 }
-                document.querySelectorAll('.drag-handle').forEach(handle => handle.classList.remove('hidden'));
+                
+                document.querySelectorAll('.edit-controls-container').forEach(container => {
+                    container.classList.remove('hidden');
+                    container.classList.add('flex');
+                    const section = container.closest('section');
+                    const sectionId = section.dataset.sectionId;
+                    const isHidden = section.classList.contains('section-hidden-in-edit');
+                    const icon = container.querySelector('i');
+                    icon.classList.toggle('fa-eye-slash', isHidden);
+                    icon.classList.toggle('fa-eye', !isHidden);
+                });
+
                 if (DOMElements.sortableSectionsContainer && typeof Sortable !== 'undefined') {
                     state.sortableInstance = new Sortable(DOMElements.sortableSectionsContainer, {
                         animation: 150,
@@ -935,23 +973,34 @@
                 }
             },
             exitLayoutEditMode: (save = false) => {
-                if (save && state.sortableInstance) {
+                if (save) {
                     const newOrder = [...DOMElements.sortableSectionsContainer.children].map(el => el.dataset.sectionId);
                     utils.saveData(CONSTANTS.LAYOUT_ORDER_KEY, newOrder);
-                } else {
-                    actions.applyCustomLayout();
+
+                    const visibilitySettings = {};
+                    DOMElements.sortableSectionsContainer.querySelectorAll('section').forEach(section => {
+                        const sectionId = section.dataset.sectionId;
+                        visibilitySettings[sectionId] = !section.classList.contains('section-hidden-in-edit');
+                    });
+                    utils.saveData(CONSTANTS.SECTION_VISIBILITY_KEY, visibilitySettings);
                 }
+
                 if (state.sortableInstance) {
                     state.sortableInstance.destroy();
                     state.sortableInstance = null;
                 }
+                
+                document.querySelectorAll('.edit-controls-container').forEach(container => container.classList.add('hidden'));
+                document.querySelectorAll('section.section-hidden-in-edit').forEach(section => section.classList.remove('section-hidden-in-edit'));
+
                 const controls = document.getElementById('edit-layout-controls');
                 if(controls) {
                     controls.classList.add('hidden');
                     controls.classList.remove('flex');
                 }
                 document.querySelector('[data-action="edit-layout"]')?.classList.remove('hidden');
-                document.querySelectorAll('.drag-handle').forEach(handle => handle.classList.add('hidden'));
+                
+                actions.applyCustomLayout();
             },
             openAddTaskPopup: (defaults = {}) => {
                 if (!DOMElements.addTaskPopup || !DOMElements.addTaskForm) return;
@@ -1042,28 +1091,18 @@
                     const reviewItems = utils.loadData(CONSTANTS.REVIEW_ITEMS_KEY);
                     const surveyData = utils.loadData(CONSTANTS.AI_SURVEY_KEY_PREFIX + currentWeekNumber, null);
                     const userProfile = utils.loadData(CONSTANTS.USER_PROFILE_KEY, null);
-                    const examGoal = utils.loadData(CONSTANTS.EXAM_GOAL_KEY, null);
-                    const mockExams = utils.loadData(CONSTANTS.MOCK_EXAMS_KEY);
-                    const pastPapers = utils.loadData(CONSTANTS.PAST_PAPERS_KEY);
+                    const isExamMode = utils.loadData(CONSTANTS.EXAM_MODE_KEY, true);
 
-                    // Basis for plan generation
-                    const basis = {
-                        records: `${records.length}件の学習記録`,
-                        reviewItems: `${reviewItems.filter(item => !item.isCompleted).length}件の復習項目`,
-                        survey: surveyData ? '今週のアンケート回答あり' : '今週のアンケート回答なし',
-                        profile: userProfile ? '基本プロファイルあり' : '基本プロファイルなし',
-                        examGoal: examGoal ? '受験目標設定あり' : '受験目標設定なし',
-                        mockExams: `${mockExams.length}件の模試結果`,
-                        pastPapers: `${pastPapers.length}件の過去問記録`,
-                    };
-                    const basisKey = CONSTANTS.AI_PLAN_BASIS_KEY_PREFIX + currentWeekNumber;
-                    utils.saveData(basisKey, basis);
-                    
-                    const model = 'gemini-2.5-flash';
-                    let prompt = `あなたは優秀な受験戦略家です。以下のユーザーの状況を分析し、志望校合格という目標から逆算して、今週1週間の具体的かつ戦略的な学習スケジュールと、学習を継続するための実践的なアドバイスを生成してください。`;
+                    let prompt;
+                    if (isExamMode) {
+                        const examGoal = utils.loadData(CONSTANTS.EXAM_GOAL_KEY, null);
+                        const mockExams = utils.loadData(CONSTANTS.MOCK_EXAMS_KEY);
+                        const pastPapers = utils.loadData(CONSTANTS.PAST_PAPERS_KEY);
 
-                    if (userProfile) {
-                        prompt += `
+                        prompt = `あなたは優秀な受験戦略家です。以下のユーザーの状況を分析し、志望校合格という目標から逆算して、今週1週間の具体的かつ戦略的な学習スケジュールと、学習を継続するための実践的なアドバイスを生成してください。`;
+
+                        if (userProfile) {
+                            prompt += `
 
 【ユーザーの基本情報】
 - 学習目的: ${userProfile.purpose}
@@ -1071,40 +1110,54 @@
 - 苦手・強化したい科目: ${userProfile.weakSubjects}
 - 得意な科目: ${userProfile.strongSubjects}
 - 主な学習デバイス: ${userProfile.device}`;
-                    }
-
-                    if (examGoal && examGoal.school) {
-                        let daysRemainingText = '不明';
-                        if (examGoal.date) {
-                            const diffTime = new Date(examGoal.date) - new Date();
-                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                            daysRemainingText = `${diffDays}日`;
                         }
-                        prompt += `
+
+                        if (examGoal && examGoal.school) {
+                            let daysRemainingText = '不明';
+                            if (examGoal.date) {
+                                const diffTime = new Date(examGoal.date) - new Date();
+                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                daysRemainingText = `${diffDays}日`;
+                            }
+                            prompt += `
 
 【ユーザーの目標】
 - 志望校: ${examGoal.school} (匿名化: 志望校A)
 - 受験日: ${examGoal.date || '未設定'} (残り ${daysRemainingText})
 - 受験科目: ${examGoal.subjects || '未設定'}`;
-                    }
-                    
-                    prompt += `
+                        }
+                        
+                        prompt += `
 
 【ユーザーの現在の状況】
 - 全学習記録: ${records.length}件
 - 未完了の復習タスク: ${reviewItems.filter(item => !item.isCompleted).length}件`;
-                    
-                    if (mockExams.length > 0) {
-                        const latestMock = mockExams.sort((a,b) => new Date(b.date) - new Date(a.date))[0];
-                        prompt += `
+                        
+                        if (mockExams.length > 0) {
+                            const latestMock = mockExams.sort((a,b) => new Date(b.date) - new Date(a.date))[0];
+                            prompt += `
 - 最新の模試結果 (${latestMock.name} (${latestMock.date}) を「模試A」とします):
 ${latestMock.scores.split('\n').map(s => `  - ${s}`).join('\n')}
   - 判定: ${latestMock.judgment}`;
-                    }
-                    
-                    if (pastPapers.length > 0) {
-                        prompt += `
+                        }
+                        
+                        if (pastPapers.length > 0) {
+                            prompt += `
 - 過去問演習記録: ${pastPapers.length}件`;
+                        }
+                    } else {
+                        // Non-exam mode prompt
+                        prompt = `あなたは優秀な学習プランナーです。以下のユーザーの状況を考慮し、今週1週間の具体的な学習スケジュールと、学習を継続するための実践的なアドバイスを生成してください。`;
+                        if (userProfile) {
+                            prompt += `
+
+【ユーザーの基本情報】
+- 学習目的: ${userProfile.purpose}
+- 学習スタイル: ${userProfile.style}
+- 苦手・強化したい科目: ${userProfile.weakSubjects}
+- 得意な科目: ${userProfile.strongSubjects}
+- 主な学習デバイス: ${userProfile.device}`;
+                        }
                     }
 
                     if (surveyData) {
@@ -1120,20 +1173,19 @@ ${latestMock.scores.split('\n').map(s => `  - ${s}`).join('\n')}
                     prompt += `
 
 【指示】
-1. 上記の全情報を総合的に分析し、志望校と現状のギャップを特定してください。
-2. そのギャップを埋めるために、今週最も優先すべき学習課題を3つ挙げてください。
-3. それらの課題に基づき、具体的な教材名や参考書のページ範囲まで含んだ、実行可能な1週間の学習スケジュールを生成してください。
-4. 学習を継続するための、モチベーションを高める実践的なアドバイスも提供してください。
-5. 最後に、現在の合格可能性、最優先課題、今週のおすすめ学習テーマをまとめたサマリーを生成してください。
+1. 上記の全情報を総合的に分析してください。
+2. 実行可能な1週間の学習スケジュールを生成してください。
+3. 学習を継続するための、モチベーションを高める実践的なアドバイスも提供してください。
+${isExamMode ? `4. 現在の合格可能性、最優先課題、今週のおすすめ学習テーマをまとめたサマリーを生成してください。` : ''}
 
 【出力形式のルール】
 必ず以下のキーを含むJSONオブジェクトのみを返してください。説明文やマークダウンのコードブロック指定(\`\`\`json)は絶対に含めないでください。
 {
-  "strategy_summary": {
+  ${isExamMode ? `"strategy_summary": {
     "pass_probability": "現在の合格可能性（例: C判定相当, 55%程度）",
     "priority_tasks": ["最優先課題1", "最優先課題2"],
     "weekly_theme": "今週のおすすめ学習テーマ"
-  },
+  },` : ''}
   "weekly_schedule": [
     {
       "dayOfWeek": "月曜日",
@@ -1146,6 +1198,7 @@ ${latestMock.scores.split('\n').map(s => `  - ${s}`).join('\n')}
   "practical_advice": "ユーザーへの具体的なアドバイス（マークダウン形式の文字列）"
 }`;
                     
+                    const model = 'gemini-2.5-flash';
                     const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
                     const response = await fetch(apiEndpoint, {
                         method: 'POST',
@@ -1339,6 +1392,13 @@ ${newExam.scores.split('\n').map(s => `  - ${s}`).join('\n')}
                     case 'add-task-open': actions.openAddTaskPopup({ date: actionTarget.dataset.date }); break;
                     case 'add-task-from-record': actions.openAddTaskPopup({ text: actionTarget.dataset.text, subject: actionTarget.dataset.subject }); break;
                     case 'complete-review': actions.completeReviewItem(actionTarget.dataset.reviewId); break;
+                    case 'toggle-section-visibility':
+                        const section = actionTarget.closest('section');
+                        section.classList.toggle('section-hidden-in-edit');
+                        const icon = actionTarget.querySelector('i');
+                        icon.classList.toggle('fa-eye');
+                        icon.classList.toggle('fa-eye-slash');
+                        break;
                     case 'select-subject-tag':
                         const subjectTagsContainer = actionTarget.parentElement;
                         const currentSelectedTag = subjectTagsContainer.querySelector('.selected');
