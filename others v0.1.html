@@ -68,18 +68,22 @@
         }
         
         .nav-link {
-             padding: 8px 12px;
-            transition: color 0.3s ease, background-color 0.3s ease;
-            border-radius: 10px; font-weight: 500;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 0.5rem;
+            transition: color 0.2s, background-color 0.2s;
         }
         .theme-dark .nav-link { color: var(--text-secondary-dark); }
-        .theme-light .nav-link { color: #555; }
-        .theme-dark .nav-link:hover { color: var(--text-primary-dark); background-color: rgba(255, 255, 255, 0.1); }
-        .theme-light .nav-link:hover { color: #000; background-color: #f3f4f6; }
+        .theme-light .nav-link { color: var(--text-secondary-light); }
+        .theme-dark .nav-link:hover { background-color: rgba(255, 255, 255, 0.1); color: var(--text-primary-dark); }
+        .theme-light .nav-link:hover { background-color: #e5e7eb; }
 
-        .nav-link-active { font-weight: 600; }
-        .theme-dark .nav-link-active { color: var(--text-primary); background-color: var(--ios-blue); }
-        .theme-light .nav-link-active { color: white; background-color: #019863; }
+        .nav-link.active {
+            font-weight: 600;
+        }
+        .theme-dark .nav-link.active { background-color: var(--ios-blue); color: white; }
+        .theme-light .nav-link.active { background-color: var(--ios-blue); color: white; }
         
         .form-input {
             margin-top: 0.25rem; display: block; width: 100%;
@@ -89,7 +93,7 @@
         .theme-dark .form-input {
              background-color: rgba(120, 120, 128, 0.18);
              border: 1px solid var(--glass-border-color-dark);
-             color: var(--text-primary);
+             color: var(--text-primary-dark);
         }
          .theme-light .form-input {
              background-color: #fff;
@@ -114,7 +118,6 @@
         .theme-dark .ios-button:hover { background-color: #0069CC; transform: scale(1.03); }
         .theme-light .ios-button:hover { background-color: #017a50; transform: scale(1.03); }
 
-        /* ★★★ AIトーンのカスタムラジオボタン風スタイル ★★★ */
         .segmented-control {
             display: flex;
             padding: 2px;
@@ -177,11 +180,11 @@
             </div>
             <h2 class="text-xl sm:text-2xl font-semibold leading-tight tracking-tight">StudySpark</h2>
         </div>
-        <nav class="hidden md:flex items-center gap-1 p-1 bg-black/10 theme-light:bg-gray-100 rounded-xl">
-            <a class="nav-link text-sm" href="home.html">ホーム</a>
-            <a class="nav-link text-sm" href="record.html">記録</a>
-            <a class="nav-link text-sm" href="data.html">データ</a>
-            <a class="nav-link text-sm nav-link-active" href="others.html">その他</a>
+        <nav class="hidden md:flex items-center gap-1 p-1 rounded-xl bg-black/10 theme-light:bg-gray-200">
+            <a href="./index.html" class="nav-link">ホーム</a>
+            <a href="./record.html" class="nav-link">記録</a>
+            <a href="./data.html" class="nav-link">データ</a>
+            <a href="./others.html" class="nav-link active">その他</a>
         </nav>
         <div class="flex items-center gap-3 sm:gap-4">
             <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-9 border-2 border-[var(--ios-blue)] shadow-lg" style='background-image: url("https://placehold.co/100x100/000000/FFFFFF?text=U");'></div>
@@ -217,7 +220,6 @@
                 </div>
                 <div>
                     <label class="form-label">AIの会話トーン</label>
-                    <!-- ★★★ 修正点: セグメントコントロールに変更 ★★★ -->
                     <div id="aiTone" class="segmented-control mt-2">
                         <label><input type="radio" name="aiToneRadio" value="friendly"><span class="segment">親しみやすい</span></label>
                         <label><input type="radio" name="aiToneRadio" value="polite"><span class="segment">丁寧</span></label>
@@ -259,8 +261,8 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const geminiApiKeyInput = document.getElementById('geminiApiKey');
-        const aiToneContainer = document.getElementById('aiTone'); // ★★★ 修正 ★★★
-        const aiToneRadios = document.querySelectorAll('input[name="aiToneRadio"]'); // ★★★ 修正 ★★★
+        const aiToneContainer = document.getElementById('aiTone');
+        const aiToneRadios = document.querySelectorAll('input[name="aiToneRadio"]');
         const customToneContainer = document.getElementById('customToneContainer');
         const customAiToneTextarea = document.getElementById('customAiTone');
         const themeSelector = document.getElementById('theme-selector');
