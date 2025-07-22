@@ -348,7 +348,8 @@
                     <h2 class="text-xl sm:text-2xl font-semibold leading-tight tracking-tight">合格戦略サマリー</h2>
                     <div class="edit-controls-container hidden items-center gap-2">
                         <button data-action="toggle-section-visibility" class="ios-icon-button !w-8 !h-8" title="表示切り替え"><i class="fas fa-eye"></i></button>
-                        <div class="drag-handle cursor-move text-gray-500"><i class="fas fa-grip-vertical"></i></div>
+                        <!-- ★★★ 変更点 ★★★ -->
+                        <div class="drag-handle cursor-move text-gray-500 p-2 -m-2"><i class="fas fa-grip-vertical"></i></div>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
@@ -372,10 +373,10 @@
                     <h2 class="text-xl sm:text-2xl font-semibold leading-tight tracking-tight">学習状況の概要</h2>
                     <div class="edit-controls-container hidden items-center gap-2">
                         <button data-action="toggle-section-visibility" class="ios-icon-button !w-8 !h-8" title="表示切り替え"><i class="fas fa-eye"></i></button>
-                        <div class="drag-handle cursor-move text-gray-500"><i class="fas fa-grip-vertical"></i></div>
+                        <!-- ★★★ 変更点 ★★★ -->
+                        <div class="drag-handle cursor-move text-gray-500 p-2 -m-2"><i class="fas fa-grip-vertical"></i></div>
                     </div>
                 </div>
-                <!-- ★★★ 変更点 ★★★ -->
                 <div class="grid grid-cols-2 gap-4">
                     <div class="col-span-2 flex flex-col gap-3 p-4 sm:p-6 glass-card hover-lift">
                         <p class="text-sm font-medium leading-normal text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)]">今日の学習時間</p>
@@ -415,7 +416,8 @@
                          </div>
                          <div class="edit-controls-container hidden items-center gap-2 ml-4">
                             <button data-action="toggle-section-visibility" class="ios-icon-button !w-8 !h-8" title="表示切り替え"><i class="fas fa-eye"></i></button>
-                            <div class="drag-handle cursor-move text-gray-500"><i class="fas fa-grip-vertical"></i></div>
+                            <!-- ★★★ 変更点 ★★★ -->
+                            <div class="drag-handle cursor-move text-gray-500 p-2 -m-2"><i class="fas fa-grip-vertical"></i></div>
                         </div>
                     </div>
                 </div>
@@ -429,7 +431,8 @@
                     <h2 class="text-xl sm:text-2xl font-semibold leading-tight tracking-tight">今日の復習</h2>
                     <div class="edit-controls-container hidden items-center gap-2">
                         <button data-action="toggle-section-visibility" class="ios-icon-button !w-8 !h-8" title="表示切り替え"><i class="fas fa-eye"></i></button>
-                        <div class="drag-handle cursor-move text-gray-500"><i class="fas fa-grip-vertical"></i></div>
+                        <!-- ★★★ 変更点 ★★★ -->
+                        <div class="drag-handle cursor-move text-gray-500 p-2 -m-2"><i class="fas fa-grip-vertical"></i></div>
                     </div>
                 </div>
                 <div id="review-list" class="space-y-6"></div>
@@ -441,7 +444,8 @@
                     <h2 class="text-xl sm:text-2xl font-semibold leading-tight tracking-tight">AIによる分析</h2>
                     <div class="edit-controls-container hidden items-center gap-2">
                         <button data-action="toggle-section-visibility" class="ios-icon-button !w-8 !h-8" title="表示切り替え"><i class="fas fa-eye"></i></button>
-                        <div class="drag-handle cursor-move text-gray-500"><i class="fas fa-grip-vertical"></i></div>
+                        <!-- ★★★ 変更点 ★★★ -->
+                        <div class="drag-handle cursor-move text-gray-500 p-2 -m-2"><i class="fas fa-grip-vertical"></i></div>
                     </div>
                 </div>
                 <div class="p-6 sm:p-8 glass-card hover-lift">
@@ -456,7 +460,8 @@
                             </button>
                         </div>
                     </div>
-                    <div id="ai-container" >
+                    <!-- ★★★ 変更点 ★★★ -->
+                    <div id="ai-container" class="min-h-[150px]">
                         <p id="ai-loading-message" class="text-gray-400 hidden">AIが計画を作成中です...</p>
                         <div id="ai-advice-container" class="mt-6 border-t pt-6 border-[var(--glass-border-color-dark)] theme-light:border-[var(--glass-border-color-light)]"></div>
                     </div>
@@ -468,7 +473,8 @@
                     <h2 class="text-xl sm:text-2xl font-semibold leading-tight tracking-tight">最近の学習記録から予定を作成</h2>
                     <div class="edit-controls-container hidden items-center gap-2">
                         <button data-action="toggle-section-visibility" class="ios-icon-button !w-8 !h-8" title="表示切り替え"><i class="fas fa-eye"></i></button>
-                        <div class="drag-handle cursor-move text-gray-500"><i class="fas fa-grip-vertical"></i></div>
+                        <!-- ★★★ 変更点 ★★★ -->
+                        <div class="drag-handle cursor-move text-gray-500 p-2 -m-2"><i class="fas fa-grip-vertical"></i></div>
                     </div>
                 </div>
                 <div id="recent-records-list" class="space-y-4"></div>
@@ -702,7 +708,6 @@
                 
                 todaysReviews.forEach(item => {
                     const card = document.createElement('div');
-                    // ★★★ 変更点 ★★★
                     card.className = 'flex flex-col md:flex-row items-stretch justify-between gap-6 rounded-2xl glass-card p-4 sm:p-6 shadow-lg';
                     card.innerHTML = `
                         <div class="flex flex-col gap-1 flex-1">
