@@ -105,7 +105,6 @@
         .sortable-ghost { opacity: 0.4; background: var(--ios-blue); }
         .section-hidden-in-edit { opacity: 0.4; border: 2px dashed var(--ios-orange); }
         
-        /* weekly-schedule-grid のスタイルを削除 */
         .day-column { border-radius: 1rem; padding: 1rem; min-height: 200px; display: flex; flex-direction: column; }
         .theme-dark .day-column { background-color: rgba(255,255,255,0.05); }
         .theme-light .day-column { background-color: #f9fafb; }
@@ -326,7 +325,7 @@
 </div>
 
 <main class="px-4 sm:px-6 md:px-10 lg:px-16 flex flex-1 justify-center py-8 sm:py-10">
-    <div class="layout-content-container flex flex-col w-full max-w-7xl gap-8 sm:gap-10">
+    <div class="layout-content-container flex flex-col w-full max-w-7xl gap-6 sm:gap-10">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 p-6 sm:p-8 glass-card">
             <div>
                 <h1 class="tracking-tight text-2xl sm:text-3xl font-semibold leading-tight">おかえりなさい、<span class="animated-gradient-text">学習者さん！</span></h1>
@@ -343,7 +342,7 @@
             </div>
         </div>
         
-        <div id="sortable-sections" class="flex flex-col gap-8 sm:gap-10">
+        <div id="sortable-sections" class="flex flex-col gap-6 sm:gap-10">
             <section data-section-id="strategy-summary">
                 <div class="flex justify-between items-center px-1 pb-4 sm:pb-5">
                     <h2 class="text-xl sm:text-2xl font-semibold leading-tight tracking-tight">合格戦略サマリー</h2>
@@ -353,15 +352,15 @@
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
-                    <div class="flex flex-col gap-3 p-6 sm:p-7 glass-card">
+                    <div class="flex flex-col gap-3 p-5 sm:p-6 glass-card">
                         <p class="text-sm font-medium leading-normal text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)]">現在の合格可能性</p>
-                        <p id="pass-probability" class="tracking-tight text-3xl sm:text-4xl font-bold leading-tight">分析中...</p>
+                        <p id="pass-probability" class="tracking-tight text-2xl sm:text-4xl font-bold leading-tight">分析中...</p>
                     </div>
-                    <div class="flex flex-col gap-3 p-6 sm:p-7 glass-card">
+                    <div class="flex flex-col gap-3 p-5 sm:p-6 glass-card">
                         <p class="text-sm font-medium leading-normal text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)]">今週の最優先課題</p>
                         <ul id="priority-tasks" class="mt-2 space-y-2 text-sm list-disc pl-5"><li>分析中...</li></ul>
                     </div>
-                    <div class="flex flex-col gap-3 p-6 sm:p-7 glass-card">
+                    <div class="flex flex-col gap-3 p-5 sm:p-6 glass-card">
                         <p class="text-sm font-medium leading-normal text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)]">今週のおすすめ学習テーマ</p>
                         <p id="weekly-theme" class="tracking-tight text-lg font-semibold leading-tight mt-2">分析中...</p>
                     </div>
@@ -376,21 +375,22 @@
                         <div class="drag-handle cursor-move text-gray-500"><i class="fas fa-grip-vertical"></i></div>
                     </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
-                    <div class="flex flex-col gap-3 p-6 sm:p-7 glass-card hover-lift">
+                <!-- ★★★ 変更点 ★★★ -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2 flex flex-col gap-3 p-4 sm:p-6 glass-card hover-lift">
                         <p class="text-sm font-medium leading-normal text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)]">今日の学習時間</p>
-                        <p id="today-total-time" class="tracking-tight text-3xl sm:text-4xl font-bold leading-tight">0分</p>
+                        <p id="today-total-time" class="tracking-tight text-2xl sm:text-3xl font-bold leading-tight">0分</p>
                         <div id="today-progress-bar" class="w-full h-2.5 bg-black/20 theme-light:bg-gray-200 rounded-full mt-2 overflow-hidden shadow-inner"></div>
                         <div id="today-legend" class="text-xs mt-2 flex flex-wrap gap-x-3 gap-y-1"></div>
                     </div>
-                    <div class="flex flex-col gap-3 p-6 sm:p-7 glass-card hover-lift">
+                    <div class="flex flex-col gap-3 p-4 sm:p-6 glass-card hover-lift">
                         <p class="text-sm font-medium leading-normal text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)]">連続学習</p>
-                        <p id="streak-days" class="tracking-tight text-3xl sm:text-4xl font-bold leading-tight">0 日</p>
+                        <p id="streak-days" class="tracking-tight text-2xl sm:text-3xl font-bold leading-tight">0 日</p>
                         <div class="flex mt-2 space-x-1.5" id="streak-icons"></div>
                     </div>
-                    <div class="flex flex-col gap-3 p-6 sm:p-7 glass-card hover-lift">
+                    <div class="flex flex-col gap-3 p-4 sm:p-6 glass-card hover-lift">
                         <p class="text-sm font-medium leading-normal text-[var(--text-secondary-dark)] theme-light:text-[var(--text-secondary-light)]">今週の学習時間</p>
-                        <p id="week-total-time" class="tracking-tight text-3xl sm:text-4xl font-bold leading-tight">0時間 0分</p>
+                        <p id="week-total-time" class="tracking-tight text-2xl sm:text-3xl font-bold leading-tight">0時間 0分</p>
                         <div id="week-progress-bar" class="w-full h-2.5 bg-black/20 theme-light:bg-gray-200 rounded-full mt-2 overflow-hidden shadow-inner"></div>
                         <div id="week-legend" class="text-xs mt-2 flex flex-wrap gap-x-3 gap-y-1"></div>
                     </div>
@@ -420,8 +420,6 @@
                     </div>
                 </div>
                 <div id="weekly-schedule-container" class="glass-card p-4 sm:p-6">
-                    <!-- ★★★ 変更点 ★★★ -->
-                    <!-- weekly-schedule-grid のクラスを変更 -->
                     <div id="weekly-schedule-grid" class="flex space-x-4 overflow-x-auto pb-4 md:grid md:grid-cols-7 md:gap-4 md:space-x-0"></div>
                 </div>
             </section>
@@ -704,7 +702,8 @@
                 
                 todaysReviews.forEach(item => {
                     const card = document.createElement('div');
-                    card.className = 'flex flex-col md:flex-row items-stretch justify-between gap-6 rounded-2xl glass-card p-6 shadow-lg';
+                    // ★★★ 変更点 ★★★
+                    card.className = 'flex flex-col md:flex-row items-stretch justify-between gap-6 rounded-2xl glass-card p-4 sm:p-6 shadow-lg';
                     card.innerHTML = `
                         <div class="flex flex-col gap-1 flex-1">
                             <p class="text-sm font-medium leading-normal text-[var(--ios-orange)]">${item.subject}</p>
@@ -714,7 +713,7 @@
                                 <i class="fas fa-check mr-2"></i>復習完了
                             </button>
                         </div>
-                        <div class="w-full md:w-1/3 h-48 md:h-auto bg-center bg-no-repeat bg-cover rounded-lg flex-shrink-0" style="background-image: url('https://placehold.co/480x270/0A0A0A/FFFFFF?text=${encodeURIComponent(item.textbook)}');"></div>
+                        <div class="w-full md:w-1/3 h-32 sm:h-40 md:h-auto bg-center bg-no-repeat bg-cover rounded-lg flex-shrink-0" style="background-image: url('https://placehold.co/480x270/0A0A0A/FFFFFF?text=${encodeURIComponent(item.textbook)}');"></div>
                     `;
                     DOMElements.reviewListEl.appendChild(card);
                 });
@@ -741,8 +740,6 @@
                     const day = utils.addDays(monday, i);
                     const dayStr = utils.dateToYYYYMMDD(day);
                     const dayColumn = document.createElement('div');
-                    // ★★★ 変更点 ★★★
-                    // 各曜日のカラムに幅と伸縮に関するクラスを追加
                     dayColumn.className = 'day-column w-48 md:w-auto flex-shrink-0';
                     if (utils.dateToYYYYMMDD(new Date()) === dayStr) {
                         dayColumn.classList.add('border-2', 'border-[var(--ios-blue)]');
@@ -1555,4 +1552,4 @@ ${newExam.scores.split('\n').map(s => `  - ${s}`).join('\n')}
 })();
 </script>
 </body>
-</html>
+</ht
