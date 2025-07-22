@@ -104,8 +104,8 @@
         
         .sortable-ghost { opacity: 0.4; background: var(--ios-blue); }
         .section-hidden-in-edit { opacity: 0.4; border: 2px dashed var(--ios-orange); }
-
-        .weekly-schedule-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
+        
+        /* weekly-schedule-grid のスタイルを削除 */
         .day-column { border-radius: 1rem; padding: 1rem; min-height: 200px; display: flex; flex-direction: column; }
         .theme-dark .day-column { background-color: rgba(255,255,255,0.05); }
         .theme-light .day-column { background-color: #f9fafb; }
@@ -420,7 +420,9 @@
                     </div>
                 </div>
                 <div id="weekly-schedule-container" class="glass-card p-4 sm:p-6">
-                    <div id="weekly-schedule-grid" class="weekly-schedule-grid"></div>
+                    <!-- ★★★ 変更点 ★★★ -->
+                    <!-- weekly-schedule-grid のクラスを変更 -->
+                    <div id="weekly-schedule-grid" class="flex space-x-4 overflow-x-auto pb-4 md:grid md:grid-cols-7 md:gap-4 md:space-x-0"></div>
                 </div>
             </section>
 
@@ -739,7 +741,9 @@
                     const day = utils.addDays(monday, i);
                     const dayStr = utils.dateToYYYYMMDD(day);
                     const dayColumn = document.createElement('div');
-                    dayColumn.className = 'day-column';
+                    // ★★★ 変更点 ★★★
+                    // 各曜日のカラムに幅と伸縮に関するクラスを追加
+                    dayColumn.className = 'day-column w-48 md:w-auto flex-shrink-0';
                     if (utils.dateToYYYYMMDD(new Date()) === dayStr) {
                         dayColumn.classList.add('border-2', 'border-[var(--ios-blue)]');
                     }
